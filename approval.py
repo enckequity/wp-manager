@@ -150,6 +150,6 @@ def pre_tool_call(tool_name: str = "", args: Any = None, **kwargs: Any) -> Optio
         return {
             "action": "block",
             "message": f"wp-manager: not run — this needs human approval and this is an unattended {who}. "
-                       f"({message}) Run it from an interactive chat or the Desktop WP Manager page.",
+                       f"({message}) Run it from an interactive chat.",
         }
     return {"action": "approve", "message": f"wp-manager: {message}", "rule_key": rule_key}

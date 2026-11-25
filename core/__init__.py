@@ -1,9 +1,7 @@
-"""wp-manager core: pure logic and HTTP transport shared by the agent tools (tools.py) and the
-dashboard backend (dashboard/plugin_api.py).
+"""wp-manager core: pure logic and HTTP transport behind the agent tools (tools.py).
 
-Every module in this package uses package-relative imports only, so the same files load both as
-``<hermes plugin package>.core`` (agent side) and as a standalone package that plugin_api.py loads
-by path (dashboard side).
+The TeamShift build ships no dashboard backend or Desktop page: the dashboard's update route ran
+updates without the ``pre_tool_call`` approval hook, so every action goes through the tools.
 """
 
 PLUGIN_ID = "wp-manager"

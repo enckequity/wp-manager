@@ -1,4 +1,4 @@
-"""Operations shared by the agent tools and the Desktop backend.
+"""Operations behind the agent tools.
 
 Functions validate all input before any network or credential access, raise
 :class:`ServiceError` / :class:`WPError` with scrubbed messages, and record every write action

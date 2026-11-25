@@ -1,7 +1,6 @@
 """Plugin settings (``config_schema`` in plugin.yaml), read through a swappable getter.
 
-The agent side installs ``ctx.get_config``; the dashboard side installs a reader over
-``plugins.entries.wp-manager.settings`` in config.yaml. Defaults apply when neither is available.
+The agent side installs ``ctx.get_config``. Defaults apply when it is not available.
 """
 
 from __future__ import annotations

@@ -1,7 +1,7 @@
 """Where wp-manager keeps its files: ``<HERMES_HOME>/wp-manager/``.
 
 The Hermes home is resolved at call time through Hermes's own helper so the active profile is
-honoured (the dashboard scopes ``?profile=`` requests by home). Tests install an override.
+honoured. Tests install an override.
 """
 
 from __future__ import annotations

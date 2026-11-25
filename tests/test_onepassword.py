@@ -186,40 +186,6 @@ class OnePassword(unittest.TestCase):
             self.assert_clean(cm.exception)
             self.assertIsNone(cm.exception.__cause__)
 
-    def test_http_storage_metadata_and_create_contract(self):
-        from fastapi import FastAPI
-        from fastapi.testclient import TestClient
-        from test_plugin_api import load_api
-        api = load_api()
-        app = FastAPI()
-        app.include_router(api.router, prefix='/api/plugins/wp-manager')
-        with patch.object(api, '_settings_getter', side_effect=lambda key, default=None: '/trusted/op-wrapper' if key == 'op_binary' else default):
-            with TestClient(app) as client:
-                metadata = client.get('/api/plugins/wp-manager/credential-storage')
-                self.assertEqual(metadata.status_code, 200)
-                self.assertEqual(metadata.json()['vaults'], [{'id': V, 'name': 'Test vault'}])
-                missing = client.post('/api/plugins/wp-manager/sites', json=self.args(storage=None))
-                self.assertEqual(missing.status_code, 400)
-                result = client.post('/api/plugins/wp-manager/sites', json=self.args())
-                self.assertEqual(result.status_code, 200, result.text)
-                self.assertIn('1Password', result.json()['credential_storage'])
-                self.assert_clean(result.text)
-
-    def test_http_failures_do_not_echo_cli_output(self):
-        from fastapi import FastAPI
-        from fastapi.testclient import TestClient
-        from test_plugin_api import load_api
-        api = load_api()
-        app = FastAPI()
-        app.include_router(api.router)
-        with patch.object(api, '_settings_getter', side_effect=lambda key, default=None: '/trusted/op-wrapper' if key == 'op_binary' else default):
-            with TestClient(app) as client:
-                self.failure = 'item'
-                result = client.post('/sites', json=self.args())
-                self.assertEqual(result.status_code, 400)
-                self.assert_clean(result.text)
-                self.assertEqual(registry.list_sites(), [])
-
     def test_existing_reference_ignores_connection_password(self):
         self.env.secrets['WPM_EXISTING_APP_PASSWORD'] = 'OtherExistingPassword'
         result = service.add_site(self.args(storage='existing', credential={'env': 'WPM_EXISTING_APP_PASSWORD'}), actor='desktop')
