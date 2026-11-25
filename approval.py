@@ -2,17 +2,20 @@
 
 Gated (``{"action": "approve", "rule_key": ...}``):
   * ``wp_update_apply`` — always (rule ``wp-manager:update:<site>``);
-  * ``wp_content_save`` — when it publishes, or edits an item that is already published
-    (rule ``wp-manager:publish:<site>``); drafts and pending items go through;
+  * ``wp_content_save`` — always: publishing or editing a published item (rule
+    ``wp-manager:publish:<site>``), and every other write to the site, drafts included (rule
+    ``wp-manager:write:<site>``);
+  * ``wp_site_remove`` — always (rule ``wp-manager:remove:<site>``);
   * ``wp_site_add`` — always: adding a site sends an existing secret (the site's default
     ``WPM_<ID>_APP_PASSWORD`` included) to a URL the model chose (rule
     ``wp-manager:credential:<site>``), or creates a new 1Password item
     (``wp-manager:credential-store:<site>``). ``allow_insecure`` adds an ``:insecure`` suffix so
     an "always allow" for the https site never covers a plain-http one.
 
-Every other tool is exempt. Invalid arguments are not gated: the tool itself rejects them without
-any network call. In unattended runs (cron, webhooks) a gated call is blocked — fail closed —
-because nobody is there to approve it.
+Every other tool only reads. Approval is pinned on in this build: there is no setting that turns
+the gate off. Invalid arguments are not gated: the tool itself rejects them without any network
+call. In unattended runs (cron, webhooks) a gated call is blocked — fail closed — because nobody is
+there to approve it.
 """
 
 from __future__ import annotations
@@ -20,9 +23,9 @@ from __future__ import annotations
 import os
 from typing import Any, Callable, Optional
 
-from .core import redact, registry, service, settings
+from .core import redact, registry, service
 
-GATED_TOOLS = frozenset({"wp_update_apply", "wp_content_save", "wp_site_add"})
+GATED_TOOLS = frozenset({"wp_update_apply", "wp_content_save", "wp_site_add", "wp_site_remove"})
 UNATTENDED_PLATFORMS = frozenset({"webhook", "msgraph_webhook", "api_server"})
 NO_BACKUP = "wp-manager takes no backups: make sure a recent host backup exists first."
 
@@ -81,8 +84,11 @@ def _decide_save(args: dict) -> Optional[tuple[str, str]]:
     if body.get("status") == "publish":
         return (f"wp-manager:publish:{site['id']}",
                 f"Publish {label} on {site['label']} ({site['url']}); it becomes publicly visible.")
+    write = (f"wp-manager:write:{site['id']}",
+             f"Save {label} on {site['label']} ({site['url']}) as {body.get('status') or 'its current status'}: "
+             f"{', '.join(sorted(body))}.")
     if cid is None:
-        return None
+        return write
     try:
         current = service.current_status(site, noun, cid)
     except Exception as exc:  # fail closed: could not prove it is unpublished
@@ -95,7 +101,7 @@ def _decide_save(args: dict) -> Optional[tuple[str, str]]:
         return (f"wp-manager:publish:{site['id']}",
                 f"Edit the already-{'published' if current == 'publish' else 'scheduled'} {label} on "
                 f"{site['label']} ({site['url']}): {change}.{unpublish}")
-    return None
+    return write
 
 
 def _decide_add(args: dict) -> Optional[tuple[str, str]]:
@@ -119,7 +125,14 @@ def _decide_add(args: dict) -> Optional[tuple[str, str]]:
             f"That secret will be sent to this site as its WordPress Application Password.{warn}")
 
 
-_DECIDERS = {"wp_update_apply": _decide_update, "wp_content_save": _decide_save, "wp_site_add": _decide_add}
+def _decide_remove(args: dict) -> Optional[tuple[str, str]]:
+    site = registry.get_site(args.get("site"))
+    return (f"wp-manager:remove:{site['id']}",
+            f"Remove {site['label']} ({site['url']}) from the managed sites. Its Application Password is not revoked.")
+
+
+_DECIDERS = {"wp_update_apply": _decide_update, "wp_content_save": _decide_save, "wp_site_add": _decide_add,
+             "wp_site_remove": _decide_remove}
 
 
 def decide(tool_name: str, args: Any) -> Optional[tuple[str, str]]:
@@ -142,8 +155,6 @@ def pre_tool_call(tool_name: str = "", args: Any = None, **kwargs: Any) -> Optio
     if decision is None:
         return None
     rule_key, message = decision
-    if tool_name != "wp_site_add" and not settings.current().require_approval:
-        return None
     message = redact.scrub(message)
     who = unattended()
     if who:

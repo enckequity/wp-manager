@@ -68,7 +68,7 @@ creating or editing posts and pages. wp-manager takes **no backups**.
 
 - Never ask the user to type their WordPress admin password. wp-manager only uses Application
   Passwords, which can be revoked under Users → Profile → Application Passwords.
-- With `require_approval: true` (default), unattended runs (cron) cannot install updates or
-  publish. Disabling that setting removes those guards; credential-binding and new-item storage
-  gates remain enabled. Draft creation is not gated. Scans and health checks are fine in cron.
+- Every update, content save (drafts included), site add and site remove asks the user first, and
+  unattended runs (cron) cannot do any of them. This cannot be turned off. Scans and health checks
+  are fine in cron.
 - Every write action is logged to `$HERMES_HOME/wp-manager/actions.jsonl`.

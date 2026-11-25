@@ -43,8 +43,9 @@ class Hook(unittest.TestCase):
         self.assertEqual(self.t.network_calls, before)
 
     # ---------------------------------------------------------------- content
-    def test_draft_create_not_gated(self):
-        self.assertIsNone(self.hook("wp_content_save", {"site": "wp-example", "type": "post", "title": "x"}))
+    def test_draft_create_gated(self):  # TeamShift: every write asks
+        d = self.hook("wp_content_save", {"site": "wp-example", "type": "post", "title": "x"})
+        self.assertEqual((d["action"], d["rule_key"]), ("approve", "wp-manager:write:wp-example"))
 
     def test_publish_gated(self):
         d = self.hook("wp_content_save", {"site": "wp-example", "type": "post", "title": "x", "status": "publish"})
@@ -61,8 +62,9 @@ class Hook(unittest.TestCase):
         self.assertEqual(d["action"], "approve")
         self.assertIn("draft", d["message"])
 
-    def test_edit_draft_not_gated(self):
-        self.assertIsNone(self.hook("wp_content_save", {"site": "wp-example", "type": "post", "id": 15, "title": "y"}))
+    def test_edit_draft_gated(self):  # TeamShift: every write asks
+        d = self.hook("wp_content_save", {"site": "wp-example", "type": "post", "id": 15, "title": "y"})
+        self.assertEqual((d["action"], d["rule_key"]), ("approve", "wp-manager:write:wp-example"))
 
     def test_status_lookup_failure_fails_closed(self):
         self.t.base = "https://unreachable.invalid"
@@ -130,7 +132,7 @@ class Hook(unittest.TestCase):
     # ---------------------------------------------------------------- general
     def test_other_tools_exempt(self):
         for tool in ("wp_sites", "wp_updates_scan", "wp_health_check", "wp_content_get", "wp_content_list",
-                     "wp_site_remove", "terminal", "web_search"):
+                     "terminal", "web_search"):
             self.assertIsNone(self.hook(tool, {"site": "wp-example"}), tool)
 
     def test_invalid_args_not_gated_and_no_network(self):
@@ -159,15 +161,19 @@ class Hook(unittest.TestCase):
             d = self.hook("wp_update_apply", {"site": "wp-example", "type": "plugin"})
         self.assertEqual(d["action"], "block")
 
-    def test_cron_still_allows_ungated_calls(self):
+    def test_cron_still_allows_reads(self):
         approval.set_cron_probe(lambda: object())
         try:
-            self.assertIsNone(self.hook("wp_content_save", {"site": "wp-example", "type": "post", "title": "x"}))
+            self.assertIsNone(self.hook("wp_updates_scan", {"sites": ["wp-example"]}))
+            d = self.hook("wp_content_save", {"site": "wp-example", "type": "post", "title": "x"})
+            self.assertEqual(d["action"], "block")
         finally:
             approval.set_cron_probe(None)
 
 
-class ApprovalOff(unittest.TestCase):
+class ApprovalCannotBeTurnedOff(unittest.TestCase):
+    """TeamShift: ``require_approval: false`` in config is ignored."""
+
     def setUp(self):
         self.env = Env(settings={"require_approval": False}).start()
         add_default_site(self.env)
@@ -178,19 +184,12 @@ class ApprovalOff(unittest.TestCase):
     def hook(self, tool, args):
         return approval.pre_tool_call(tool_name=tool, args=args)
 
-    def test_gated_calls_go_through(self):
-        self.assertIsNone(self.hook("wp_update_apply", {"site": "wp-example", "type": "plugin"}))
-        self.assertIsNone(self.hook("wp_content_save", {"site": "wp-example", "type": "post", "title": "x",
-                                                        "status": "publish"}))
-
-    def test_default_secret_add_still_gated(self):
-        d = self.hook("wp_site_add", {"url": "https://new.test", "username": "a", "id": "new"})
-        self.assertEqual(d["action"], "approve")
-
-    def test_credential_binding_still_gated(self):
-        d = self.hook("wp_site_add", {"url": "https://evil.test", "username": "a", "id": "evil",
-                                      "credential": {"env": "WPM_WP_EXAMPLE_APP_PASSWORD"}})
-        self.assertEqual(d["action"], "approve")
+    def test_gated_calls_still_ask(self):
+        for tool, args in (("wp_update_apply", {"site": "wp-example", "type": "plugin"}),
+                           ("wp_content_save", {"site": "wp-example", "type": "post", "title": "x",
+                                                "status": "publish"}),
+                           ("wp_site_add", {"url": "https://new.test", "username": "a", "id": "new"})):
+            self.assertEqual(self.hook(tool, args)["action"], "approve", tool)
 
 
 if __name__ == "__main__":

@@ -27,11 +27,6 @@ provides_tools:
 provides_hooks:
   - pre_tool_call
 config_schema:
-  require_approval:
-    type: bool
-    default: true
-    label: "Require approval"
-    description: "Ask before installing updates, publishing, or editing published posts and pages. Unattended runs (cron) are refused while this is on."
   op_binary:
     type: str
     default: "op"

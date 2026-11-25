@@ -159,7 +159,7 @@ class Settings(unittest.TestCase):
         settings.set_getter(lambda k, d=None: {"require_approval": "false", "request_timeout": 900,
                                                "max_parallel": 0}.get(k, d))
         s = settings.current()
-        self.assertFalse(s.require_approval)
+        self.assertTrue(s.require_approval)  # TeamShift: pinned on
         self.assertEqual(s.request_timeout, 600)
         self.assertEqual(s.update_timeout, 600)
         self.assertEqual(s.max_parallel, 1)
