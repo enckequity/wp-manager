@@ -76,9 +76,18 @@ def resolve(site: dict) -> str:
         raise CredentialError(f"secret {name} could not be read: {type(exc).__name__}") from exc
     if not value:
         raise CredentialError(
-            f"secret {name} is not set. Save the site's WordPress Application Password as the workspace "
-            f"secret {name}, then try again"
+            f"secret {name} is not set. Save the site's WordPress Application Password (or the connector's "
+            f"connection string) as the workspace secret {name}, then try again"
         )
+    if isinstance(value, str) and value.strip().startswith(CONNECTION_PREFIX):
+        conn = decode_connection_string(value)
+        try:
+            same_site = registry.normalize_url(conn["url"]) == registry.normalize_url(site["url"])
+        except (KeyError, registry.RegistryError):
+            same_site = False
+        if not same_site or conn["user"] != site.get("username"):
+            raise CredentialError(f"secret {name} holds a connection string for a different site or user")
+        value = conn["app_password"]
     password = _clean_password(value)
     redact.remember(password, site.get("username"))
     return password

@@ -18,7 +18,8 @@ creating or editing posts and pages. wp-manager takes **no backups**.
 1. On the WordPress site: install and activate *TeamShift Connector*, open
    **Tools → TeamShift Connector**, click **Create connection for TeamShift** and copy the `wpmh1:…` string.
 2. The Application Password is never taken from chat and never stored by wp-manager. Ask the user
-   to save it as the workspace secret `WPM_<SITE_ID>_APP_PASSWORD` (the site id is derived from
+   to save the connection string (or the bare Application Password) as the workspace secret
+   `WPM_<SITE_ID>_APP_PASSWORD` (the site id is derived from
    the address, e.g. `WPM_MYSITE_APP_PASSWORD` for mysite.com). If they paste the connection
    string or a password into chat, do not repeat any part of it back; ask them to save it as that
    secret instead. 1Password (`op://`) references are not supported.
