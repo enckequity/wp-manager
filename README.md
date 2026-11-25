@@ -1,5 +1,20 @@
 # WP Manager for Hermes
 
+> **TeamShift build (branch `teamshift`, fork of danieljwonder/wp-manager at 78b783b).** This
+> build differs from upstream, and parts of the text below describe upstream only:
+> - approval is pinned on: every update, content save (drafts included), site add and site
+>   remove asks first, and none of them runs unattended; `require_approval` is not a setting;
+> - there is no dashboard backend or Desktop page (`dashboard/`, `desktop/` are removed);
+> - there is no `op://` / 1Password CLI path and no `op_binary` setting: the Application Password
+>   (or the connector's connection string) is read only from the workspace secret
+>   `WPM_<SITE_ID>_APP_PASSWORD`, through the engine's secret route, failing closed;
+> - the WordPress plugin is `connector/teamshift-connector` ("TeamShift Connector", REST
+>   namespace `teamshift-connector/v1`);
+> - requests refuse loopback, private, link-local, CGNAT and metadata addresses, on every
+>   redirect hop, and connect only to the address that was checked. Localhost sites are refused.
+>
+> `tests/test_teamshift.py` covers each change.
+
 Look after your WordPress sites from [Hermes Agent](https://hermes-agent.nousresearch.com/):
 see which plugins, themes, translations and WordPress versions need updating, install updates
 after you approve them, check that each site still works afterwards, and write or edit posts and
