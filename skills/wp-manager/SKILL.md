@@ -17,19 +17,16 @@ creating or editing posts and pages. wp-manager takes **no backups**.
 
 1. On the WordPress site: install and activate *Website Manager: WP Connector for Hermes*, open
    **Tools → Hermes Connector**, click **Create connection for Hermes** and copy the `wpmh1:…` string.
-2. Best: the user pastes that string into **Hermes Desktop → WP Manager → Add site**. It contains a
-   password, so steer users away from pasting it into chat. If they already did, call `wp_site_add`
-   only after confirming explicit storage: `storage: onepassword` with the user's selected
-   `vault_id`, or `storage: existing` with `credential`. There is no .env option: wp-manager never
-   writes the .env file. Never repeat the string or any part of it back. Prefer Desktop for vault
-   selection. New 1Password items need the op CLI (README: Set up the 1Password CLI), require
-   approval, and are ID-reference/read-back/WordPress-auth verified before registry save. A failed attempt may leave a new item for manual
-   removal. Existing sites are not migrated. Report the returned `credential_storage` accurately.
-3. Users with a password manager can store the Application Password as a Hermes secret first
-   (`hermes secrets onepassword set WPM_<SITE_ID>_APP_PASSWORD op://Vault/Item/password`) and call
-   `wp_site_add` with `url` and `username` only. Every `wp_site_add` asks the user to approve the
-   URL and the secret it will receive. Ids that would share another site's secret name (`my-blog`
-   vs `my--blog`) are refused: pick a clearly different id.
+2. The Application Password is never taken from chat and never stored by wp-manager. Ask the user
+   to save it as the workspace secret `WPM_<SITE_ID>_APP_PASSWORD` (the site id is derived from
+   the address, e.g. `WPM_MYSITE_APP_PASSWORD` for mysite.com). If they paste the connection
+   string or a password into chat, do not repeat any part of it back; ask them to save it as that
+   secret instead. 1Password (`op://`) references are not supported.
+3. Then call `wp_site_add` with `url` and `username` (or the connection string, whose password
+   is ignored), `storage: existing` and `credential: {"env": "WPM_<SITE_ID>_APP_PASSWORD"}`.
+   Every `wp_site_add` asks the user to approve the URL and the secret it will receive. Ids that
+   would share another site's secret name (`my-blog` vs `my--blog`) are refused: pick a clearly
+   different id.
 4. `http://` sites are refused unless the user explicitly accepts `allow_insecure: true` (its own
    approval prompt). Localhost is fine.
 

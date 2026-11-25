@@ -1,8 +1,9 @@
 """Credential resolution. Sites store a *reference*; the Application Password is resolved per call.
 
-* ``{"env": "WPM_<ID>_APP_PASSWORD"}`` (default) — ``agent.secret_scope.get_secret``: covers the
-  profile's ``.env`` and every Hermes secret source (1Password, Bitwarden, command helper).
-* ``{"op": "op://Vault/Item/field"}`` — ``op read`` run directly (argument list, no shell, 15 s).
+The only reference is ``{"env": "WPM_<ID>_APP_PASSWORD"}``, read through
+``agent.secret_scope.get_secret`` (this workspace's own secrets). The TeamShift build has no
+``op://`` path: the plugin never runs the 1Password CLI, never passes a service-account token to a
+child process, and refuses ``op`` references and unresolved ``op://`` values.
 
 wp-manager never reads or writes the ``.env`` file itself.
 
@@ -14,15 +15,10 @@ from __future__ import annotations
 import base64
 import binascii
 import json
-import os
-import re
-import shutil
-import subprocess
 from typing import Any, Callable, Optional
 
 from . import redact, registry
 
-OP_TIMEOUT = 15
 CONNECTION_PREFIX = "wpmh1:"
 MAX_PASSWORD_LEN = 200
 
@@ -31,76 +27,19 @@ class CredentialError(Exception):
     """Credential could not be resolved / decoded. Messages never contain the secret."""
 
 
-# ------------------------------------------------------------------ swappable sources (tests)
+# ------------------------------------------------------------------ swappable source (tests)
 def _default_secret_getter(name: str) -> Optional[str]:
+    """This workspace's own secret, through the engine's profile-scoped secret route only.
+    Fails closed when that route is unavailable: never a plain process-environment read."""
     try:
         from agent.secret_scope import get_secret
-    except ImportError:
-        return os.environ.get(name)
+    except ImportError as exc:
+        raise CredentialError("the workspace secret store is unavailable; no credential was read") from exc
     return get_secret(name)
 
 
-# What the 1Password CLI needs and nothing else: the Hermes process environment holds every
-# provider credential, so `op` (and any wrapper the user points op_binary at) never inherits it.
-# Mirrors Hermes's own 1Password secret source allowlist.
-OP_ENV_ALLOWLIST = (
-    "PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_ALL", "USERPROFILE", "APPDATA", "LOCALAPPDATA",
-    "SystemRoot", "TMPDIR", "TMP", "TEMP", "XDG_CONFIG_HOME", "XDG_RUNTIME_DIR", "OP_CONFIG_DIR",
-    "OP_ACCOUNT", "OP_CONNECT_HOST", "OP_CONNECT_TOKEN", "OP_LOAD_DESKTOP_APP_SETTINGS",
-)
-OP_TOKEN_ENV = "OP_SERVICE_ACCOUNT_TOKEN"
-
-
-def op_child_env(source: Optional[dict] = None) -> dict:
-    """Minimal environment for an ``op`` child process. The service-account token comes through
-    Hermes's secret route (``get_secret``) when the process environment does not carry it."""
-    src = os.environ if source is None else source
-    env = {k: src[k] for k in OP_ENV_ALLOWLIST if k in src}
-    env.update((k, v) for k, v in src.items() if k.startswith("OP_SESSION_"))
-    token = src.get(OP_TOKEN_ENV)
-    if not token and source is None:
-        try:
-            token = _default_secret_getter(OP_TOKEN_ENV)
-        except Exception:
-            token = None
-    if token:
-        env[OP_TOKEN_ENV] = token
-    env["NO_COLOR"] = "1"
-    return env
-
-
-def _default_op_runner(binary: str, ref: str) -> str:
-    exe = shutil.which(binary) if os.sep not in binary else (binary if os.path.isfile(binary) else None)
-    if not exe:
-        raise CredentialError(
-            f"1Password CLI {binary!r} not found; install `op` or set op_binary, or use a Hermes secret "
-            "(hermes secrets onepassword set ...) instead"
-        )
-    try:
-        proc = subprocess.run(  # noqa: S603 - fixed argument list, no shell
-            [exe, "read", "--no-newline", ref],
-            capture_output=True,
-            text=True,
-            timeout=OP_TIMEOUT,
-            stdin=subprocess.DEVNULL,
-            env=op_child_env(),
-            check=False,
-        )
-    except subprocess.TimeoutExpired as exc:
-        raise CredentialError(f"`op read` timed out after {OP_TIMEOUT}s (is 1Password unlocked?)") from exc
-    except OSError as exc:
-        raise CredentialError(f"could not run `op`: {type(exc).__name__}") from exc
-    if proc.returncode != 0:
-        lines = (proc.stderr or "").strip().splitlines()
-        detail = redact.scrub(lines[-1])[:200] if lines else f"exit {proc.returncode}"
-        raise CredentialError(f"`op read` failed: {detail}")
-    return proc.stdout
-
-
 SecretGetter = Callable[[str], Optional[str]]
-OpRunner = Callable[[str, str], str]
 _secret_getter: SecretGetter = _default_secret_getter
-_op_runner: OpRunner = _default_op_runner
 
 
 def set_secret_getter(fn: Optional[SecretGetter]) -> None:
@@ -108,43 +47,38 @@ def set_secret_getter(fn: Optional[SecretGetter]) -> None:
     _secret_getter = fn or _default_secret_getter
 
 
-def set_op_runner(fn: Optional[OpRunner]) -> None:
-    global _op_runner
-    _op_runner = fn or _default_op_runner
-
-
 # ------------------------------------------------------------------ resolution
 def _clean_password(value: Any) -> str:
     if not isinstance(value, str):
         raise CredentialError("credential is empty")
     v = value.strip()
+    if v.lower().startswith("op://"):
+        raise CredentialError("credential is an op:// reference, which this build does not resolve; store the "
+                              "Application Password itself as the workspace secret")
     if not v or len(v) > MAX_PASSWORD_LEN or any(c in v for c in "\r\n\x00"):
         raise CredentialError("credential is empty or malformed")
     return v
 
 
-def resolve(site: dict, op_binary: str = "op") -> str:
+def resolve(site: dict) -> str:
     """Return the Application Password for ``site``. Raises CredentialError (no secret in message)."""
     ref = site.get("credential") or {"env": registry.default_env_name(site["id"])}
     try:
         ref = registry.check_credential_ref(ref)
     except registry.RegistryError as exc:
         raise CredentialError(str(exc)) from exc
-    if "env" in ref:
-        name = ref["env"]
-        try:
-            value = _secret_getter(name)
-        except Exception as exc:  # UnscopedSecretError and friends
-            raise CredentialError(f"secret {name} could not be read: {type(exc).__name__}") from exc
-        if not value:
-            raise CredentialError(
-                f"secret {name} is not set. Store it with e.g. `hermes secrets onepassword set {name} "
-                f"op://Vault/Item/password`, or add {name}=... to the Hermes .env yourself and restart Hermes"
-            )
-    else:
-        if not re.match(r"^[A-Za-z0-9_./\\:-]{1,255}$", op_binary or "") or op_binary.startswith("-"):
-            raise CredentialError("op_binary setting is not a valid program name or path")
-        value = _op_runner(op_binary, ref["op"])
+    name = ref["env"]
+    try:
+        value = _secret_getter(name)
+    except CredentialError:
+        raise
+    except Exception as exc:  # UnscopedSecretError and friends
+        raise CredentialError(f"secret {name} could not be read: {type(exc).__name__}") from exc
+    if not value:
+        raise CredentialError(
+            f"secret {name} is not set. Save the site's WordPress Application Password as the workspace "
+            f"secret {name}, then try again"
+        )
     password = _clean_password(value)
     redact.remember(password, site.get("username"))
     return password

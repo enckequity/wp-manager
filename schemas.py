@@ -19,10 +19,10 @@ SITE_ADD = {
     "name": "wp_site_add",
     "description": (
         "Register a WordPress site. The site needs the 'Website Manager: WP Connector for Hermes' plugin and a "
-        "WordPress Application Password. Verifies the connection before saving. Prefer asking the user to paste "
-        "the connection string into the Hermes Desktop 'Add site' dialog (WP Manager page) rather than into chat. "
-        "Without a connection string, the password must already be stored as a Hermes secret, by default "
-        "WPM_<SITE_ID>_APP_PASSWORD (e.g. `hermes secrets onepassword set WPM_MYSITE_APP_PASSWORD op://...`)."
+        "WordPress Application Password. Verifies the connection before saving. The password is never taken from "
+        "chat: it must already be saved as a workspace secret, by default WPM_<SITE_ID>_APP_PASSWORD. "
+        "Ask the user to save it there first, then pass url and username (or the connection string) with "
+        "storage: existing and that credential."
     ),
     "parameters": {"type": "object", "properties": {
         "url": {"type": "string", "description": "Site address, e.g. https://example.com"},
@@ -32,17 +32,15 @@ SITE_ADD = {
         "tags": {"type": "array", "items": {"type": "string"}},
         "credential": {
             "type": "object",
-            "description": 'Where the Application Password lives: {"env": "WPM_<ID>_APP_PASSWORD"} (a Hermes '
-                           'secret: 1Password, Bitwarden, command helper, or a .env entry the user added) or {"op": "op://Vault/Item/field"}.',
-            "properties": {"env": {"type": "string"}, "op": {"type": "string"}},
+            "description": 'Where the Application Password lives: {"env": "WPM_<ID>_APP_PASSWORD"}, a workspace '
+                           'secret the user saved.',
+            "properties": {"env": {"type": "string"}},
         },
         "connection_string": {"type": "string",
-                              "description": "wpmh1:... string from Tools → Hermes Connector. Never repeat it back."},
-        "storage": {"type": "string", "enum": ["onepassword", "existing"],
-                    "description": "Explicit choice required with a connection string: onepassword (new item in "
-                                   "vault_id) or existing (with credential). wp-manager never writes .env. "
-                                   "Prefer Desktop for secret input."},
-        "vault_id": {"type": "string", "description": "Explicit 1Password vault ID for new item creation."},
+                              "description": "wpmh1:... string from Tools → Hermes Connector. Its address and user are "
+                                             "used; its password is ignored. Never repeat it back."},
+        "storage": {"type": "string", "enum": ["existing"],
+                    "description": "existing (with credential). wp-manager never stores passwords."},
         "allow_insecure": {"type": "boolean",
                            "description": "Allow plain http:// (password sent unencrypted). Default false."},
     }},

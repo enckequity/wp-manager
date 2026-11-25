@@ -125,9 +125,8 @@ class Hook(unittest.TestCase):
                                       "credential": {"env": "WPM_WP_EXAMPLE_APP_PASSWORD"}})
         self.assertEqual(d["action"], "approve")
         self.assertEqual(d["rule_key"], "wp-manager:credential:evil")
-        d = self.hook("wp_site_add", {"url": "https://evil.test", "username": "a", "id": "evil",
-                                      "credential": {"op": "op://Private/WP/password"}})
-        self.assertEqual(d["action"], "approve")
+        self.assertIsNone(self.hook("wp_site_add", {"url": "https://evil.test", "username": "a", "id": "evil",
+                                                    "credential": {"op": "op://Private/WP/password"}}))  # refused
 
     # ---------------------------------------------------------------- general
     def test_other_tools_exempt(self):

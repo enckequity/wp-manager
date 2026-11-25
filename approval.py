@@ -6,10 +6,9 @@ Gated (``{"action": "approve", "rule_key": ...}``):
     ``wp-manager:publish:<site>``), and every other write to the site, drafts included (rule
     ``wp-manager:write:<site>``);
   * ``wp_site_remove`` — always (rule ``wp-manager:remove:<site>``);
-  * ``wp_site_add`` — always: adding a site sends an existing secret (the site's default
+  * ``wp_site_add`` — always: adding a site sends an existing workspace secret (the site's default
     ``WPM_<ID>_APP_PASSWORD`` included) to a URL the model chose (rule
-    ``wp-manager:credential:<site>``), or creates a new 1Password item
-    (``wp-manager:credential-store:<site>``). ``allow_insecure`` adds an ``:insecure`` suffix so
+    ``wp-manager:credential:<site>``). ``allow_insecure`` adds an ``:insecure`` suffix so
     an "always allow" for the https site never covers a plain-http one.
 
 Every other tool only reads. Approval is pinned on in this build: there is no setting that turns
@@ -105,8 +104,7 @@ def _decide_save(args: dict) -> Optional[tuple[str, str]]:
 
 
 def _decide_add(args: dict) -> Optional[tuple[str, str]]:
-    """Every agent-driven site add asks first. The only secret a tool call can create is a new
-    1Password item (its own prompt); any other credential already exists (the site's default
+    """Every agent-driven site add asks first. The credential already exists (the site's default
     ``WPM_<ID>_APP_PASSWORD`` included, which may be left over from a removed site), and adding
     the site sends it to the URL the model chose."""
     plan = service.plan_add(args)
@@ -116,10 +114,6 @@ def _decide_add(args: dict) -> Optional[tuple[str, str]]:
     warn = (" The site uses plain http:// (allow_insecure), so the Application Password crosses the "
             "network unencrypted.") if insecure else ""
     suffix = ":insecure" if insecure else ""
-    if plan["storage"] == "onepassword":
-        return (f"wp-manager:credential-store:{site['id']}{suffix}",
-                f"Create a new 1Password item in vault {plan['vault_id']} for {site['url']} and verify "
-                f"the WordPress connection.{warn}")
     return (f"wp-manager:credential:{site['id']}{suffix}",
             f"Connect {site['url']} using the existing secret {registry.credential_label(ref)}. "
             f"That secret will be sent to this site as its WordPress Application Password.{warn}")

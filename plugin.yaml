@@ -27,11 +27,6 @@ provides_tools:
 provides_hooks:
   - pre_tool_call
 config_schema:
-  op_binary:
-    type: str
-    default: "op"
-    label: "1Password CLI"
-    description: "Trusted CLI program for op:// reads and explicit new-item creation. Must already have vault access on the Hermes backend."
   request_timeout:
     type: int
     default: 60

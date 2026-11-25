@@ -1,7 +1,8 @@
 """The site registry: ``<HERMES_HOME>/wp-manager/sites.json``. Never contains a password.
 
 Each site: ``id`` (slug), ``label``, ``url``, ``username``, ``tags``, ``credential`` (a reference:
-``{"env": NAME}`` or ``{"op": "op://..."}``), ``allow_insecure``, ``created_at``.
+``{"env": NAME}``, a workspace secret; ``op://`` references are refused), ``allow_insecure``,
+``created_at``.
 """
 
 from __future__ import annotations
@@ -18,7 +19,6 @@ from . import paths
 
 SITE_ID_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$")
 ENV_NAME_RE = re.compile(r"^WPM_[A-Z0-9_]+_APP_PASSWORD$")
-OP_REF_RE = re.compile(r"^op://[^\s\x00-\x1f]{3,500}$")
 TAG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 _.-]{0,39}$")
 USERNAME_MAX = 120
 
@@ -123,9 +123,12 @@ def default_env_name(site_id: str) -> str:
 
 
 def check_credential_ref(ref: Any) -> dict:
-    """Validate ``{"env": NAME}`` or ``{"op": "op://..."}``."""
+    """Validate ``{"env": NAME}``. ``op`` references are refused (no 1Password CLI path)."""
+    if isinstance(ref, dict) and "op" in ref:
+        raise RegistryError("op:// credential references are disabled; save the Application Password as the "
+                            "workspace secret WPM_<SITE>_APP_PASSWORD and use {\"env\": \"WPM_<SITE>_APP_PASSWORD\"}")
     if not isinstance(ref, dict) or len(ref) != 1:
-        raise RegistryError('credential must be {"env": "WPM_<SITE>_APP_PASSWORD"} or {"op": "op://Vault/Item/field"}')
+        raise RegistryError('credential must be {"env": "WPM_<SITE>_APP_PASSWORD"}')
     (kind, value), = ref.items()
     if not isinstance(value, str):
         raise RegistryError("credential reference must be a string")
@@ -137,11 +140,7 @@ def check_credential_ref(ref: Any) -> dict:
                 "names are accepted, so a site can never be pointed at an unrelated secret)"
             )
         return {"env": value}
-    if kind == "op":
-        if not OP_REF_RE.match(value) or value.startswith("-"):
-            raise RegistryError("credential op reference must look like op://Vault/Item/field")
-        return {"op": value}
-    raise RegistryError('credential must use "env" or "op"')
+    raise RegistryError('credential must use "env"')
 
 
 def check_tags(tags: Any) -> list[str]:
@@ -180,9 +179,9 @@ def check_label(value: Any, fallback: str) -> str:
 
 def credential_label(ref: dict) -> str:
     if "env" in ref:
-        return f"Hermes secret {ref['env']}"
+        return f"workspace secret {ref['env']}"
     if "op" in ref:
-        return f"1Password reference {ref['op']}"
+        return "a disabled op:// reference"
     return "unknown"
 
 

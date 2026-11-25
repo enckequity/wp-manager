@@ -100,28 +100,21 @@ class Env:
         self.secrets = dict(secrets or {})
         self.transport = transport or ReplayTransport()
         self.settings = dict(settings or {})
-        self.op_calls = []
 
     def start(self):
         submodule("core.paths").set_home_override(self.home)
         submodule("core.client").set_transport(self.transport)
         creds = submodule("core.credentials")
         creds.set_secret_getter(lambda name: self.secrets.get(name))
-        creds.set_op_runner(self._op_run)
         submodule("core.settings").set_getter(lambda key, default=None: self.settings.get(key, default))
         submodule("approval").set_cron_probe(None)
         return self
-
-    def _op_run(self, binary, ref):
-        self.op_calls.append((binary, ref))
-        return self.secrets.get(ref, "")
 
     def stop(self):
         submodule("core.paths").set_home_override(None)
         submodule("core.client").set_transport(None)
         creds = submodule("core.credentials")
         creds.set_secret_getter(None)
-        creds.set_op_runner(None)
         submodule("core.settings").set_getter(None)
         submodule("core.redact").forget_all()
         shutil.rmtree(self.home, ignore_errors=True)

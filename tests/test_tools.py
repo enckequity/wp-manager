@@ -44,7 +44,7 @@ class Sites(Base):
     def test_add_missing_secret_explains_and_makes_no_network_call(self):
         r = call(tools.wp_site_add, {"url": BASE, "username": USER, "id": "wp-example"})
         self.assertFalse(r["success"])
-        self.assertIn("hermes secrets onepassword set WPM_WP_EXAMPLE_APP_PASSWORD", r["error"])
+        self.assertIn("workspace secret WPM_WP_EXAMPLE_APP_PASSWORD", r["error"])
         self.assertEqual(self.t.network_calls, 0)
 
     def test_env_storage_is_refused_without_io(self):
@@ -56,7 +56,6 @@ class Sites(Base):
             self.assertFalse(r["success"], r)
             self.assertNotIn(SECRET, json.dumps(r))
         self.assertEqual(self.t.network_calls, 0)
-        self.assertEqual(self.env.op_calls, [])
         self.assertFalse((self.env.home / ".env").exists())
         self.assertFalse((self.env.home / "wp-manager" / "sites.json").exists())
 
@@ -68,13 +67,12 @@ class Sites(Base):
         self.assertFalse((self.env.home / ".env").exists())
         self.assertIn("not stored", r["note"])
 
-    def test_add_with_op_ref(self):
+    def test_add_with_op_ref_refused(self):  # TeamShift: no op:// path
         self.env.secrets["op://Private/WP/password"] = SECRET
         r = call(tools.wp_site_add, {"url": BASE, "username": USER, "id": "wp-example",
                                      "credential": {"op": "op://Private/WP/password"}})
-        self.assertTrue(r["success"], r)
-        self.assertEqual(self.env.op_calls, [("op", "op://Private/WP/password")])
-        self.assertIn("1Password", r["credential_storage"])
+        self.assertFalse(r["success"], r)
+        self.assertEqual(self.t.network_calls, 0)
 
     def test_duplicate_rejected_before_network(self):
         add_default_site(self.env)

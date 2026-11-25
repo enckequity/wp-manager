@@ -13,7 +13,7 @@ import time
 import urllib.parse
 from typing import Any, Optional
 
-from . import connector, credentials, health, onepassword, redact, registry, settings, state
+from . import connector, credentials, health, redact, registry, settings, state
 from .client import WPClient, WPError
 
 CONTENT_TYPES = {"post": "posts", "page": "pages"}
@@ -55,7 +55,7 @@ def make_client(site: dict, *, with_auth: bool = True, timeout: Optional[float] 
     password = None
     if with_auth:
         try:
-            password = credentials.resolve(site, cfg.op_binary)
+            password = credentials.resolve(site)
         except credentials.CredentialError as exc:
             raise ServiceError(str(exc), kind="credential") from exc
     return WPClient(site, password, timeout=client_timeout)
@@ -109,8 +109,8 @@ def list_sites() -> list[dict]:
 
 # ------------------------------------------------------------------ add / remove
 def plan_add(args: dict) -> dict:
-    """Validate a site-add request without network access. Returns the plan (holds the password
-    only in memory, under ``_password``)."""
+    """Validate a site-add request without network access. Returns the plan. No password is taken
+    from the request: the site's Application Password is always read from the workspace secret."""
     if not isinstance(args, dict):
         raise ServiceError("arguments must be an object")
     conn = None
@@ -133,32 +133,25 @@ def plan_add(args: dict) -> dict:
     label = registry.check_label(args.get("label"), urllib.parse.urlsplit(url).hostname or site_id)
     tags = registry.check_tags(args.get("tags"))
     ref = registry.check_credential_ref(args["credential"]) if args.get("credential") else None
-    password = None
     if ref is None:
         ref = {"env": registry.default_env_name(site_id)}
-        if conn:
-            password = conn["app_password"]
-        elif args.get("app_password"):
-            password = credentials._clean_password(args["app_password"])  # noqa: SLF001
-            redact.remember(password, username)
+    if args.get("app_password"):  # never stored or sent; only masked in every output
+        try:
+            redact.remember(credentials._clean_password(args["app_password"]), username)  # noqa: SLF001
+        except credentials.CredentialError:
+            pass
     storage = args.get("storage")
-    if storage not in (None, "onepassword", "existing"):
-        raise ServiceError("storage must be onepassword or existing (wp-manager never writes the .env file)")
-    if (conn or args.get("app_password")) and not storage and not args.get("credential"):
-        raise ServiceError("choose password storage explicitly: onepassword (new item in a vault) or existing "
-                           "(a Hermes secret or op:// reference you already set up)")
+    if storage == "onepassword" or args.get("vault_id"):
+        raise ServiceError("1Password storage is disabled; save the Application Password as the workspace secret "
+                           f"{registry.default_env_name(site_id)} and add the site with storage: existing")
+    if storage not in (None, "existing"):
+        raise ServiceError("storage must be existing (wp-manager never writes the .env file)")
+    if (conn or args.get("app_password")) and not args.get("credential"):
+        raise ServiceError("wp-manager does not store passwords: save the Application Password as the workspace "
+                           f"secret {registry.default_env_name(site_id)} first, then add the site with "
+                           f'storage: existing and credential {{"env": "{registry.default_env_name(site_id)}"}}')
     if storage == "existing" and not args.get("credential"):
         raise ServiceError("existing storage requires a credential reference")
-    if storage == "onepassword" and args.get("credential"):
-        raise ServiceError("new storage cannot be combined with an existing credential reference")
-    if storage == "onepassword":
-        if not password:
-            raise ServiceError("1Password creation requires a connection string or Application Password")
-        if not isinstance(args.get("vault_id"), str) or not onepassword.ID_RE.fullmatch(args["vault_id"]):
-            raise ServiceError("choose an explicit 1Password vault")
-    elif args.get("app_password") and not args.get("credential"):
-        raise ServiceError("a plain Application Password can only be saved as a new 1Password item; "
-                           "otherwise store it as a Hermes secret first and pass its name")
     default_env = registry.default_env_name(site_id)
     for s in registry.list_sites():
         if s["id"] == site_id:
@@ -175,8 +168,6 @@ def plan_add(args: dict) -> dict:
         "site": {"id": site_id, "label": label, "url": url, "username": username, "tags": tags,
                  "credential": ref, "allow_insecure": allow_insecure},
         "storage": storage,
-        "vault_id": args.get("vault_id"),
-        "_password": password,
         "from_connection_string": bool(conn),
         "ignored_connection_password": bool(conn and args.get("credential")),
     }
@@ -186,30 +177,17 @@ def add_site(args: dict, *, actor: str) -> dict:
     plan = plan_add(args)
     site = plan["site"]
     cfg = _cfg()
-    password = plan["_password"]
-    if password is None:
-        try:
-            password = credentials.resolve(site, cfg.op_binary)
-        except credentials.CredentialError as exc:
-            raise ServiceError(str(exc), kind="credential") from exc
-    storage = None
-    if plan["storage"] == "onepassword":
-        site["credential"], storage = onepassword.create(cfg.op_binary, plan["vault_id"], site, password)
-        # create() compared the ID-addressed read-back exactly. Authenticate against the
-        # original validated site URL, never a URL returned by the password manager.
-    client = WPClient(site, password, timeout=cfg.request_timeout)
     try:
-        raw = client.connector("GET", "status")
-    except WPError:
-        if plan["storage"] == "onepassword":
-            raise ServiceError("WordPress authentication/connection failed; registry unchanged. Remove the newly created 1Password item manually", kind="credential") from None
-        raise
+        password = credentials.resolve(site)
+    except credentials.CredentialError as exc:
+        raise ServiceError(str(exc), kind="credential") from exc
+    client = WPClient(site, password, timeout=cfg.request_timeout)
+    raw = client.connector("GET", "status")
     status = connector.normalize_status(raw)
     if not status.get("wp_version") and not status.get("connector_version"):
         raise ServiceError("the site answered, but not with a connector status; is the connector up to date?",
                            kind="bad_response")
-    if storage is None:
-        storage = f"using existing {registry.credential_label(site['credential'])} (nothing was written)"
+    storage = f"using existing {registry.credential_label(site['credential'])} (nothing was written)"
     saved = registry.add_site(site)
     state.update(site["id"], status=status, last_scan=None, last_error=None)
     state.record_action("site_add", site["id"], actor=actor, result="ok", url=site["url"],

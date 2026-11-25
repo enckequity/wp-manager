@@ -1,6 +1,5 @@
 import json
 import os
-import subprocess
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -44,8 +43,8 @@ class Urls(unittest.TestCase):
             registry.check_credential_ref({"op": "--help"})
         with self.assertRaises(registry.RegistryError):
             registry.check_credential_ref({"env": "WPM_X_APP_PASSWORD", "op": "op://a/b/c"})
-        self.assertEqual(registry.check_credential_ref({"op": "op://Private/Site/password"}),
-                         {"op": "op://Private/Site/password"})
+        with self.assertRaises(registry.RegistryError):  # TeamShift: no op:// path
+            registry.check_credential_ref({"op": "op://Private/Site/password"})
 
     def test_tags(self):
         self.assertEqual(registry.check_tags("Clients, shop"), ["clients", "shop"])
@@ -80,7 +79,6 @@ class Storage(unittest.TestCase):
 class Credentials(unittest.TestCase):
     def tearDown(self):
         credentials.set_secret_getter(None)
-        credentials.set_op_runner(None)
         submodule("core.redact").forget_all()
 
     def test_env_ref_uses_secret_getter(self):
@@ -91,7 +89,7 @@ class Credentials(unittest.TestCase):
         credentials.set_secret_getter(lambda n: None)
         with self.assertRaises(credentials.CredentialError) as cm:
             credentials.resolve({"id": "a", "username": "u", "credential": {"env": "WPM_A_APP_PASSWORD"}})
-        self.assertIn("hermes secrets onepassword set WPM_A_APP_PASSWORD", str(cm.exception))
+        self.assertIn("workspace secret WPM_A_APP_PASSWORD", str(cm.exception))
 
     def test_secret_scope_error_is_wrapped(self):
         def boom(name):
@@ -99,43 +97,6 @@ class Credentials(unittest.TestCase):
         credentials.set_secret_getter(boom)
         with self.assertRaises(credentials.CredentialError):
             credentials.resolve({"id": "a", "username": "u"})
-
-    def test_op_runner_uses_argument_list_no_shell(self):
-        seen = {}
-
-        def fake_run(argv, **kw):
-            seen["argv"], seen["kw"] = argv, kw
-            return subprocess.CompletedProcess(argv, 0, stdout=SECRET, stderr="")
-
-        with mock.patch.object(credentials.shutil, "which", return_value="/usr/bin/op"), \
-             mock.patch.object(credentials.subprocess, "run", side_effect=fake_run):
-            pw = credentials.resolve({"id": "a", "username": "u", "credential": {"op": "op://V/I/f"}}, "op")
-        self.assertEqual(pw, SECRET)
-        self.assertEqual(seen["argv"], ["/usr/bin/op", "read", "--no-newline", "op://V/I/f"])
-        self.assertNotIn("shell", seen["kw"])
-        self.assertEqual(seen["kw"]["timeout"], credentials.OP_TIMEOUT)
-
-    def test_op_failure_is_scrubbed(self):
-        def fake_run(argv, **kw):
-            return subprocess.CompletedProcess(argv, 1, stdout="", stderr=f"[ERROR] leaked {SECRET}")
-
-        with mock.patch.object(credentials.shutil, "which", return_value="/usr/bin/op"), \
-             mock.patch.object(credentials.subprocess, "run", side_effect=fake_run):
-            with self.assertRaises(credentials.CredentialError) as cm:
-                credentials.resolve({"id": "a", "username": "u", "credential": {"op": "op://V/I/f"}})
-        self.assertNotIn(SECRET, str(cm.exception))
-
-    def test_op_timeout(self):
-        with mock.patch.object(credentials.shutil, "which", return_value="/usr/bin/op"), \
-             mock.patch.object(credentials.subprocess, "run",
-                               side_effect=subprocess.TimeoutExpired(["op"], credentials.OP_TIMEOUT)):
-            with self.assertRaises(credentials.CredentialError) as cm:
-                credentials.resolve({"id": "a", "username": "u", "credential": {"op": "op://V/I/f"}})
-        self.assertIn("timed out", str(cm.exception))
-
-    def test_bad_op_binary_setting(self):
-        with self.assertRaises(credentials.CredentialError):
-            credentials.resolve({"id": "a", "username": "u", "credential": {"op": "op://V/I/f"}}, "op; rm -rf /")
 
     def test_connection_string_roundtrip(self):
         d = credentials.decode_connection_string(connection_string())
@@ -154,7 +115,7 @@ class Settings(unittest.TestCase):
 
     def test_defaults_and_clamping(self):
         s = settings.current()
-        self.assertEqual((s.require_approval, s.op_binary, s.request_timeout, s.max_parallel), (True, "op", 60, 4))
+        self.assertEqual((s.require_approval, s.request_timeout, s.max_parallel), (True, 60, 4))
         self.assertEqual(s.update_timeout, 300)
         settings.set_getter(lambda k, d=None: {"require_approval": "false", "request_timeout": 900,
                                                "max_parallel": 0}.get(k, d))
