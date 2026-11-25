@@ -20,7 +20,7 @@ PORT="${WMHC_E2E_PORT:-9400}"
 PHP_VERSION="${WMHC_E2E_PHP:-8.3}"
 WP_VERSION="${WMHC_E2E_WP:-latest}"
 TIMEOUT="${WMHC_E2E_TIMEOUT:-420}"
-CONNECTOR="$ROOT/connector/website-manager-hermes-connector"
+CONNECTOR="$ROOT/connector/teamshift-connector"
 
 mkdir -p "$RUN"
 chmod 700 "$RUN"
@@ -53,7 +53,7 @@ setsid nohup npx -y @wp-playground/cli@latest server \
 	--php "$PHP_VERSION" \
 	--wp "$WP_VERSION" \
 	--blueprint "$RUN/blueprint.generated.json" \
-	--mount-before-install "$CONNECTOR:/wordpress/wp-content/plugins/website-manager-hermes-connector" \
+	--mount-before-install "$CONNECTOR:/wordpress/wp-content/plugins/teamshift-connector" \
 	--mount-before-install "$RUN:/e2e-run" \
 	>"$RUN/playground.log" 2>&1 </dev/null &
 echo $! >"$RUN/playground.pid"

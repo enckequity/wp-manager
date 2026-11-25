@@ -9,14 +9,14 @@ metadata:
 
 # WordPress sites with wp-manager
 
-The `wp_*` tools manage WordPress sites that run the **Website Manager: WP Connector for Hermes**
+The `wp_*` tools manage WordPress sites that run the **TeamShift Connector**
 plugin. They cover plugin/theme/core/translation updates (with a health check after every run) and
 creating or editing posts and pages. wp-manager takes **no backups**.
 
 ## Connecting a site
 
-1. On the WordPress site: install and activate *Website Manager: WP Connector for Hermes*, open
-   **Tools → Hermes Connector**, click **Create connection for Hermes** and copy the `wpmh1:…` string.
+1. On the WordPress site: install and activate *TeamShift Connector*, open
+   **Tools → TeamShift Connector**, click **Create connection for TeamShift** and copy the `wpmh1:…` string.
 2. The Application Password is never taken from chat and never stored by wp-manager. Ask the user
    to save it as the workspace secret `WPM_<SITE_ID>_APP_PASSWORD` (the site id is derived from
    the address, e.g. `WPM_MYSITE_APP_PASSWORD` for mysite.com). If they paste the connection
@@ -38,7 +38,7 @@ creating or editing posts and pages. wp-manager takes **no backups**.
 2. **Before any update, ask whether the user has a recent backup from their host.** wp-manager
    takes none.
 3. `wp_update_apply` with one `type` per call (`plugin`, `theme`, `core`, `translations`). It is
-   approval-gated: Hermes asks the user. Prefer explicit `items`. On several sites, go one site
+   approval-gated: the user is asked first. Prefer explicit `items`. On several sites, go one site
    at a time and stop at the first unhealthy result.
 4. Read the result. If it has an `alert` (health degraded or down) or `warning` (some items
    failed), say so first, plainly, with the failing signals. Never call that run a success. Tell
@@ -58,7 +58,7 @@ creating or editing posts and pages. wp-manager takes **no backups**.
   `confirm_page_builder: true` for a body edit only if they explicitly insist after the warning.
   Advanced Custom Fields and similar meta-driven pages behave the same way.
 - New posts and pages are saved as **drafts** by default. Publishing, or editing anything already
-  published, needs the user's approval through Hermes. Do not set `status: publish` unless the
+  published, needs the user's approval. Do not set `status: publish` unless the
   user asked for it. Share the draft link or suggest a preview in wp-admin.
 
 ## Safety notes
@@ -68,4 +68,4 @@ creating or editing posts and pages. wp-manager takes **no backups**.
 - Every update, content save (drafts included), site add and site remove asks the user first, and
   unattended runs (cron) cannot do any of them. This cannot be turned off. Scans and health checks
   are fine in cron.
-- Every write action is logged to `$HERMES_HOME/wp-manager/actions.jsonl`.
+- Every write action is logged to `wp-manager/actions.jsonl` in the workspace home.

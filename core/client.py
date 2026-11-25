@@ -24,7 +24,7 @@ from typing import Any, Callable, Optional
 
 from . import CONNECTOR_NAMESPACE, VERSION, redact, registry
 
-USER_AGENT = f"wp-manager-hermes/{VERSION}"
+USER_AGENT = f"TeamShift-Connector-Client/{VERSION}"
 MAX_BYTES = 16 * 1024 * 1024
 MAX_REDIRECTS = 5
 
@@ -225,7 +225,7 @@ class WPClient:
         if status == 404 and code == "rest_no_route" and CONNECTOR_NAMESPACE.split("/")[0] in route:
             return WPError(
                 "the Website Manager connector plugin is not installed or not active on this site "
-                "(install it, then Tools → Hermes Connector)", status=status, code=code, kind="connector_missing",
+                "(install it, then Tools → TeamShift Connector)", status=status, code=code, kind="connector_missing",
             )
         if status == 404:
             return WPError(f"not found{': ' + message if message else ''}", status=status, code=code, kind="not_found")

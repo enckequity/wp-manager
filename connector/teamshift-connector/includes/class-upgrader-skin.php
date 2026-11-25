@@ -4,10 +4,10 @@
  *
  * Loaded lazily, only after wp-admin/includes/class-wp-upgrader.php.
  *
- * @package WebsiteManagerHermesConnector
+ * @package TeamShiftConnector
  */
 
-namespace WebsiteManagerHermesConnector;
+namespace TeamShiftConnector;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

@@ -1,7 +1,7 @@
 {
  "meta": {
   "base_url": "https://wp.example.test",
-  "note": "Hand-written to match the connector's documented/implemented response shapes (connector/website-manager-hermes-connector/includes/class-service.php). Replace or extend with real recordings via scripts/record_fixtures.py.",
+  "note": "Hand-written to match the connector's documented/implemented response shapes (connector/teamshift-connector/includes/class-service.php). Replace or extend with real recordings via scripts/record_fixtures.py.",
   "source": "synthetic",
   "username": "admin"
  },
@@ -23,7 +23,7 @@
      "name": "Example Test Site",
      "namespaces": [
       "oembed/1.0",
-      "website-manager-hermes/v1",
+      "teamshift-connector/v1",
       "wp/v2"
      ],
      "routes": {},
@@ -35,7 +35,7 @@
     "status": 200
    }
   ],
-  "GET /wp-json/website-manager-hermes/v1/health": [
+  "GET /wp-json/teamshift-connector/v1/health": [
    {
     "body": {
      "checked_at": "2026-11-05T09:06:00+00:00",
@@ -71,7 +71,7 @@
     "status": 200
    }
   ],
-  "GET /wp-json/website-manager-hermes/v1/status": [
+  "GET /wp-json/teamshift-connector/v1/status": [
    {
     "body": {
      "abilities_api": false,
@@ -134,7 +134,7 @@
     "status": 200
    }
   ],
-  "GET /wp-json/website-manager-hermes/v1/updates": [
+  "GET /wp-json/teamshift-connector/v1/updates": [
    {
     "body": {
      "core": [
@@ -240,7 +240,7 @@
     "status": 200
    }
   ],
-  "GET /wp-json/website-manager-hermes/v1/updates?refresh=1": [
+  "GET /wp-json/teamshift-connector/v1/updates?refresh=1": [
    {
     "body": {
      "core": [
@@ -513,7 +513,7 @@
     "status": 404
    }
   ],
-  "POST /wp-json/website-manager-hermes/v1/updates": [
+  "POST /wp-json/teamshift-connector/v1/updates": [
    {
     "body": {
      "duration_ms": 4210,
@@ -678,7 +678,7 @@
  },
  "variants": {
   "bad_auth": {
-   "GET /wp-json/website-manager-hermes/v1/status": [
+   "GET /wp-json/teamshift-connector/v1/status": [
     {
      "body": {
       "code": "incorrect_password",
@@ -695,7 +695,7 @@
    ]
   },
   "connector_missing": {
-   "GET /wp-json/website-manager-hermes/v1/status": [
+   "GET /wp-json/teamshift-connector/v1/status": [
     {
      "body": {
       "code": "rest_no_route",
@@ -712,7 +712,7 @@
    ]
   },
   "health_degraded": {
-   "GET /wp-json/website-manager-hermes/v1/health": [
+   "GET /wp-json/teamshift-connector/v1/health": [
     {
      "body": {
       "checked_at": "2026-11-05T09:06:00+00:00",
@@ -771,7 +771,7 @@
    ]
   },
   "locked": {
-   "POST /wp-json/website-manager-hermes/v1/updates": [
+   "POST /wp-json/teamshift-connector/v1/updates": [
     {
      "body": {
       "code": "wmhc_locked",

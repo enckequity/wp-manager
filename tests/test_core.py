@@ -185,7 +185,7 @@ class RealConnectorSamples(unittest.TestCase):
         try:
             for name, kind in (("updates-post-locked", "conflict"), ("error-wrong-password", "auth")):
                 sample = json.loads((self.DIR / f"{name}.json").read_text())
-                env.transport.responses["GET /wp-json/website-manager-hermes/v1/status"] = [
+                env.transport.responses["GET /wp-json/teamshift-connector/v1/status"] = [
                     {"status": sample["http_status"], "body": sample["body"], "headers": {}}]
                 c = client_mod.WPClient({"id": "s", "url": BASE, "username": USER}, SECRET)
                 with self.assertRaises(client_mod.WPError) as cm:
@@ -205,25 +205,25 @@ class Client(unittest.TestCase):
 
     def test_rest_route_fallback_without_pretty_permalinks(self):
         t = self.env.transport
-        t.responses["GET /wp-json/website-manager-hermes/v1/status"] = [
+        t.responses["GET /wp-json/teamshift-connector/v1/status"] = [
             {"status": 404, "body": "<html>Not Found</html>", "headers": {"content-type": "text/html"}}]
-        t.responses["GET /"] = ReplayTransport().responses["GET /wp-json/website-manager-hermes/v1/status"]
+        t.responses["GET /"] = ReplayTransport().responses["GET /wp-json/teamshift-connector/v1/status"]
         c = client_mod.WPClient(self.site, SECRET)
         data = c.connector("GET", "status")
         self.assertEqual(data["wp_version"], "6.8.1")
         self.assertTrue(c.use_rest_route)
-        self.assertIn("rest_route=%2Fwebsite-manager-hermes%2Fv1%2Fstatus", t.calls[-1].url)
+        self.assertIn("rest_route=%2Fteamshift-connector%2Fv1%2Fstatus", t.calls[-1].url)
 
     def test_non_json_is_explained(self):
-        self.env.transport.responses["GET /wp-json/website-manager-hermes/v1/status"] = [
+        self.env.transport.responses["GET /wp-json/teamshift-connector/v1/status"] = [
             {"status": 200, "body": "<html>Maintenance</html>", "headers": {}}]
         with self.assertRaises(client_mod.WPError) as cm:
             client_mod.WPClient(self.site, SECRET).connector("GET", "status")
         self.assertEqual(cm.exception.kind, "bad_response")
 
     def test_php_notice_before_json_recovered(self):
-        good = json.dumps(ReplayTransport().responses["GET /wp-json/website-manager-hermes/v1/status"][0]["body"])
-        self.env.transport.responses["GET /wp-json/website-manager-hermes/v1/status"] = [
+        good = json.dumps(ReplayTransport().responses["GET /wp-json/teamshift-connector/v1/status"][0]["body"])
+        self.env.transport.responses["GET /wp-json/teamshift-connector/v1/status"] = [
             {"status": 200, "body": "<br />\n<b>Notice</b>: something\n" + good, "headers": {}}]
         self.assertEqual(client_mod.WPClient(self.site, SECRET).connector("GET", "status")["php_version"], "8.2.20")
 

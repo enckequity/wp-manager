@@ -2,10 +2,10 @@
 /**
  * Uninstall: removes the connector's options.
  *
- * Application Passwords created for Hermes are left in place on purpose: they
+ * Application Passwords created for TeamShift are left in place on purpose: they
  * belong to the user and can be revoked under Users → Profile.
  *
- * @package WebsiteManagerHermesConnector
+ * @package TeamShiftConnector
  */
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {

@@ -1,11 +1,11 @@
 <?php
 /**
- * REST routes under website-manager-hermes/v1.
+ * REST routes under teamshift-connector/v1.
  *
- * @package WebsiteManagerHermesConnector
+ * @package TeamShiftConnector
  */
 
-namespace WebsiteManagerHermesConnector;
+namespace TeamShiftConnector;
 
 use WP_Error;
 use WP_REST_Request;
@@ -62,7 +62,7 @@ class Rest_Controller {
 					'permission_callback' => array( $this, 'can_view' ),
 					'args'                => array(
 						'refresh' => array(
-							'description' => __( 'Force a fresh update check against WordPress.org.', 'website-manager-hermes-connector' ),
+							'description' => __( 'Force a fresh update check against WordPress.org.', 'teamshift-connector' ),
 							'type'        => 'boolean',
 							'default'     => false,
 						),
@@ -74,13 +74,13 @@ class Rest_Controller {
 					'permission_callback' => array( $this, 'can_update' ),
 					'args'                => array(
 						'type'  => array(
-							'description' => __( 'Update type.', 'website-manager-hermes-connector' ),
+							'description' => __( 'Update type.', 'teamshift-connector' ),
 							'type'        => 'string',
 							'enum'        => Service::UPDATE_TYPES,
 							'required'    => true,
 						),
 						'items' => array(
-							'description' => __( 'Plugin files, theme stylesheets, a core version, or translation ids. Empty means all of that type.', 'website-manager-hermes-connector' ),
+							'description' => __( 'Plugin files, theme stylesheets, a core version, or translation ids. Empty means all of that type.', 'teamshift-connector' ),
 							'type'        => 'array',
 							'items'       => array( 'type' => 'string' ),
 							'default'     => array(),
@@ -157,7 +157,7 @@ class Rest_Controller {
 	private function forbidden() {
 		return new WP_Error(
 			'rest_forbidden',
-			__( 'Sorry, you are not allowed to do that.', 'website-manager-hermes-connector' ),
+			__( 'Sorry, you are not allowed to do that.', 'teamshift-connector' ),
 			array( 'status' => rest_authorization_required_code() )
 		);
 	}

@@ -3,7 +3,7 @@
 Signals:
   home       GET the public home page: status code, response time, critical-error text
   rest       GET /wp-json/ (unauthenticated) answers JSON
-  connector  GET /website-manager-hermes/v1/health (authenticated self-report)
+  connector  GET /teamshift-connector/v1/health (authenticated self-report)
 
 A verdict is never "ok" unless every signal was actually observed and healthy.
 """

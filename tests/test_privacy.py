@@ -86,7 +86,7 @@ class EverythingClean(unittest.TestCase):
         """A hostile/buggy site that reflects the password in an error body must not leak it."""
         add_default_site(self.env)
         body = {"code": "rest_forbidden", "message": f"bad password {SECRET} for {USER}", "data": {"status": 403}}
-        self.t.responses["GET /wp-json/website-manager-hermes/v1/status"] = [
+        self.t.responses["GET /wp-json/teamshift-connector/v1/status"] = [
             {"status": 403, "body": body, "headers": {}}]
         r = self.run_tool(tools.wp_updates_scan, {})
         self.assertEqual(r["sites"][0]["kind"], "forbidden")
@@ -147,23 +147,23 @@ class Transport(unittest.TestCase):
         self.env.stop()
 
     def test_cross_host_redirect_does_not_carry_credentials(self):
-        self.t.responses["GET /wp-json/website-manager-hermes/v1/status"] = [
-            {"status": 301, "body": "", "headers": {"location": "https://evil.test/wp-json/website-manager-hermes/v1/status"}}]
+        self.t.responses["GET /wp-json/teamshift-connector/v1/status"] = [
+            {"status": 301, "body": "", "headers": {"location": "https://evil.test/wp-json/teamshift-connector/v1/status"}}]
         before = len(self.t.calls)
         r = call(tools.wp_updates_scan, {})
         self.assertEqual(r["sites"][0]["kind"], "redirect")
         self.assertFalse(any("evil.test" in c.url for c in self.t.calls[before:]))
 
     def test_same_origin_redirect_followed(self):
-        self.t.responses["GET /wp-json/website-manager-hermes/v1/status"] = [
-            {"status": 301, "body": "", "headers": {"location": BASE + "/index.php/wp-json/website-manager-hermes/v1/status"}}]
-        self.t.responses["GET /index.php/wp-json/website-manager-hermes/v1/status"] = \
-            ReplayTransport().responses["GET /wp-json/website-manager-hermes/v1/status"]
+        self.t.responses["GET /wp-json/teamshift-connector/v1/status"] = [
+            {"status": 301, "body": "", "headers": {"location": BASE + "/index.php/wp-json/teamshift-connector/v1/status"}}]
+        self.t.responses["GET /index.php/wp-json/teamshift-connector/v1/status"] = \
+            ReplayTransport().responses["GET /wp-json/teamshift-connector/v1/status"]
         r = call(tools.wp_updates_scan, {})
         self.assertTrue(r["sites"][0]["ok"], r)
 
     def test_https_to_http_redirect_refused(self):
-        self.t.responses["GET /wp-json/website-manager-hermes/v1/status"] = [
+        self.t.responses["GET /wp-json/teamshift-connector/v1/status"] = [
             {"status": 302, "body": "", "headers": {"location": "http://wp.example.test/wp-json/x"}}]
         r = call(tools.wp_updates_scan, {})
         self.assertFalse(r["sites"][0]["ok"])

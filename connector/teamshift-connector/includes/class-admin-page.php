@@ -1,11 +1,11 @@
 <?php
 /**
- * Tools → Hermes Connector admin page.
+ * Tools → TeamShift Connector admin page.
  *
- * @package WebsiteManagerHermesConnector
+ * @package TeamShiftConnector
  */
 
-namespace WebsiteManagerHermesConnector;
+namespace TeamShiftConnector;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Admin_Page {
 
-	const SLUG           = 'website-manager-hermes-connector';
+	const SLUG           = 'teamshift-connector';
 	const CAPABILITY     = 'manage_options';
 	const NONCE_ACTION   = 'wmhc_create_connection';
 	const SETTINGS_GROUP = 'wmhc_settings_group';
@@ -58,8 +58,8 @@ class Admin_Page {
 	 */
 	public function register_menu() {
 		$hook = add_management_page(
-			__( 'Hermes Connector', 'website-manager-hermes-connector' ),
-			__( 'Hermes Connector', 'website-manager-hermes-connector' ),
+			__( 'TeamShift Connector', 'teamshift-connector' ),
+			__( 'TeamShift Connector', 'teamshift-connector' ),
 			self::CAPABILITY,
 			self::SLUG,
 			array( $this, 'render' )
@@ -136,7 +136,7 @@ class Admin_Page {
 	 */
 	public function action_links( $links ) {
 		$url = admin_url( 'tools.php?page=' . self::SLUG );
-		array_unshift( $links, '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Connect Hermes', 'website-manager-hermes-connector' ) . '</a>' );
+		array_unshift( $links, '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Connect TeamShift', 'teamshift-connector' ) . '</a>' );
 		return $links;
 	}
 
@@ -158,18 +158,18 @@ class Admin_Page {
 				'statusUrl' => rest_url( WMHC_REST_NAMESPACE . '/status' ),
 				'nonce'     => wp_create_nonce( 'wp_rest' ),
 				'i18n'      => array(
-					'copied'      => __( 'Copied', 'website-manager-hermes-connector' ),
-					'copyFailed'  => __( 'Copy failed. Select the text and copy it manually.', 'website-manager-hermes-connector' ),
-					'checking'    => __( 'Checking…', 'website-manager-hermes-connector' ),
-					'reachable'   => __( 'Reachable. Connector REST routes respond.', 'website-manager-hermes-connector' ),
-					'unreachable' => __( 'Not reachable from your browser. A security plugin or server rule may block the REST API.', 'website-manager-hermes-connector' ),
+					'copied'      => __( 'Copied', 'teamshift-connector' ),
+					'copyFailed'  => __( 'Copy failed. Select the text and copy it manually.', 'teamshift-connector' ),
+					'checking'    => __( 'Checking…', 'teamshift-connector' ),
+					'reachable'   => __( 'Reachable. Connector REST routes respond.', 'teamshift-connector' ),
+					'unreachable' => __( 'Not reachable from your browser. A security plugin or server rule may block the REST API.', 'teamshift-connector' ),
 				),
 			)
 		);
 	}
 
 	/**
-	 * Handles the "Create connection for Hermes" form before output starts.
+	 * Handles the "Create connection for TeamShift" form before output starts.
 	 *
 	 * @return void
 	 */
@@ -184,7 +184,7 @@ class Admin_Page {
 
 		$user = wp_get_current_user();
 		if ( ! current_user_can( self::CAPABILITY ) || ! current_user_can( 'create_app_password', $user->ID ) ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to create a connection.', 'website-manager-hermes-connector' ), 403 );
+			wp_die( esc_html__( 'Sorry, you are not allowed to create a connection.', 'teamshift-connector' ), 403 );
 		}
 
 		$this->created = $this->service->create_connection( $user );
@@ -200,7 +200,7 @@ class Admin_Page {
 	 */
 	public function render() {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'website-manager-hermes-connector' ) );
+			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'teamshift-connector' ) );
 		}
 
 		$user         = wp_get_current_user();
@@ -211,12 +211,12 @@ class Admin_Page {
 		$profile_url  = admin_url( 'profile.php#application-passwords-section' );
 		?>
 		<div class="wrap" id="wmhc-page">
-			<h1><?php esc_html_e( 'Hermes Connector', 'website-manager-hermes-connector' ); ?></h1>
-			<p><?php esc_html_e( 'Connect this site to the Hermes agent so it can check for and run updates. Hermes signs in with an Application Password, never your login password.', 'website-manager-hermes-connector' ); ?></p>
+			<h1><?php esc_html_e( 'TeamShift Connector', 'teamshift-connector' ); ?></h1>
+			<p><?php esc_html_e( 'Connect this site to your TeamShift assistant so it can check for and run updates. TeamShift signs in with an Application Password, never your login password.', 'teamshift-connector' ); ?></p>
 
 			<?php $this->render_created_notice( $profile_url ); ?>
 
-			<h2><?php esc_html_e( 'Connection status', 'website-manager-hermes-connector' ); ?></h2>
+			<h2><?php esc_html_e( 'Connection status', 'teamshift-connector' ); ?></h2>
 			<table class="widefat striped" style="max-width:900px">
 				<tbody>
 				<?php foreach ( $requirements as $key => $requirement ) : ?>
@@ -224,9 +224,9 @@ class Admin_Page {
 						<th scope="row" style="width:220px"><?php echo esc_html( $requirement['label'] ); ?></th>
 						<td style="width:80px">
 							<?php if ( $requirement['ok'] ) : ?>
-								<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span> <?php esc_html_e( 'OK', 'website-manager-hermes-connector' ); ?>
+								<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span> <?php esc_html_e( 'OK', 'teamshift-connector' ); ?>
 							<?php else : ?>
-								<span class="dashicons dashicons-warning" aria-hidden="true"></span> <?php esc_html_e( 'Problem', 'website-manager-hermes-connector' ); ?>
+								<span class="dashicons dashicons-warning" aria-hidden="true"></span> <?php esc_html_e( 'Problem', 'teamshift-connector' ); ?>
 							<?php endif; ?>
 						</td>
 						<td>
@@ -240,12 +240,12 @@ class Admin_Page {
 				</tbody>
 			</table>
 
-			<h2><?php esc_html_e( 'Connect Hermes', 'website-manager-hermes-connector' ); ?></h2>
+			<h2><?php esc_html_e( 'Connect TeamShift', 'teamshift-connector' ); ?></h2>
 			<p>
 				<?php
 				printf(
 					/* translators: %s: user login */
-					esc_html__( 'This creates an Application Password named "Hermes (website-manager)" for your account (%s) and shows a one-time connection string to paste into Hermes.', 'website-manager-hermes-connector' ),
+					esc_html__( 'This creates an Application Password named "TeamShift Connector" for your account (%s) and shows a one-time connection string to paste into TeamShift.', 'teamshift-connector' ),
 					'<strong>' . esc_html( $user->user_login ) . '</strong>'
 				);
 				?>
@@ -253,17 +253,17 @@ class Admin_Page {
 			<form method="post" action="<?php echo esc_url( admin_url( 'tools.php?page=' . self::SLUG ) ); ?>">
 				<?php wp_nonce_field( self::NONCE_ACTION ); ?>
 				<input type="hidden" name="wmhc_action" value="create_connection" />
-				<?php submit_button( __( 'Create connection for Hermes', 'website-manager-hermes-connector' ), 'primary', 'wmhc_create', false, $requirements['application_passwords']['ok'] ? array() : array( 'disabled' => 'disabled' ) ); ?>
+				<?php submit_button( __( 'Create connection for TeamShift', 'teamshift-connector' ), 'primary', 'wmhc_create', false, $requirements['application_passwords']['ok'] ? array() : array( 'disabled' => 'disabled' ) ); ?>
 			</form>
 
 			<?php if ( $connections ) : ?>
-				<h3><?php esc_html_e( 'Existing Hermes connections for your account', 'website-manager-hermes-connector' ); ?></h3>
+				<h3><?php esc_html_e( 'Existing TeamShift connections for your account', 'teamshift-connector' ); ?></h3>
 				<table class="widefat striped" style="max-width:900px">
 					<thead>
 						<tr>
-							<th><?php esc_html_e( 'Name', 'website-manager-hermes-connector' ); ?></th>
-							<th><?php esc_html_e( 'Created', 'website-manager-hermes-connector' ); ?></th>
-							<th><?php esc_html_e( 'Last used', 'website-manager-hermes-connector' ); ?></th>
+							<th><?php esc_html_e( 'Name', 'teamshift-connector' ); ?></th>
+							<th><?php esc_html_e( 'Created', 'teamshift-connector' ); ?></th>
+							<th><?php esc_html_e( 'Last used', 'teamshift-connector' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -271,44 +271,44 @@ class Admin_Page {
 						<tr>
 							<td><?php echo esc_html( $connection['name'] ); ?></td>
 							<td><?php echo esc_html( $this->format_time( $connection['created'] ) ); ?></td>
-							<td><?php echo esc_html( $connection['last_used'] ? $this->format_time( $connection['last_used'] ) : __( 'Never', 'website-manager-hermes-connector' ) ); ?></td>
+							<td><?php echo esc_html( $connection['last_used'] ? $this->format_time( $connection['last_used'] ) : __( 'Never', 'teamshift-connector' ) ); ?></td>
 						</tr>
 					<?php endforeach; ?>
 					</tbody>
 				</table>
-				<p><a href="<?php echo esc_url( $profile_url ); ?>"><?php esc_html_e( 'Revoke connections under Users → Profile → Application Passwords', 'website-manager-hermes-connector' ); ?></a></p>
+				<p><a href="<?php echo esc_url( $profile_url ); ?>"><?php esc_html_e( 'Revoke connections under Users → Profile → Application Passwords', 'teamshift-connector' ); ?></a></p>
 			<?php endif; ?>
 
-			<h2><?php esc_html_e( 'What Hermes may update', 'website-manager-hermes-connector' ); ?></h2>
+			<h2><?php esc_html_e( 'What TeamShift may update', 'teamshift-connector' ); ?></h2>
 			<form method="post" action="<?php echo esc_url( admin_url( 'options.php' ) ); ?>">
 				<?php settings_fields( self::SETTINGS_GROUP ); ?>
 				<fieldset>
 					<label>
 						<input type="checkbox" name="<?php echo esc_attr( Settings::OPTION ); ?>[allow_core_updates]" value="1" <?php checked( $settings['allow_core_updates'] ); ?> />
-						<?php esc_html_e( 'Allow WordPress core updates (minor releases, for example 6.8.1 → 6.8.2)', 'website-manager-hermes-connector' ); ?>
+						<?php esc_html_e( 'Allow WordPress core updates (minor releases, for example 6.8.1 → 6.8.2)', 'teamshift-connector' ); ?>
 					</label>
 					<br />
 					<label>
 						<input type="checkbox" name="<?php echo esc_attr( Settings::OPTION ); ?>[allow_major_core_updates]" value="1" <?php checked( $settings['allow_major_core_updates'] ); ?> />
-						<?php esc_html_e( 'Allow major WordPress core updates (for example 6.8 → 6.9)', 'website-manager-hermes-connector' ); ?>
+						<?php esc_html_e( 'Allow major WordPress core updates (for example 6.8 → 6.9)', 'teamshift-connector' ); ?>
 					</label>
 				</fieldset>
-				<p class="description"><?php esc_html_e( 'Plugin, theme and translation updates are always allowed for users with the matching capability. Hermes does not take backups: make sure your host does.', 'website-manager-hermes-connector' ); ?></p>
-				<?php submit_button( __( 'Save settings', 'website-manager-hermes-connector' ) ); ?>
+				<p class="description"><?php esc_html_e( 'Plugin, theme and translation updates are always allowed for users with the matching capability. TeamShift does not take backups: make sure your host does.', 'teamshift-connector' ); ?></p>
+				<?php submit_button( __( 'Save settings', 'teamshift-connector' ) ); ?>
 			</form>
 
-			<h2><?php esc_html_e( 'Recent actions', 'website-manager-hermes-connector' ); ?></h2>
+			<h2><?php esc_html_e( 'Recent actions', 'teamshift-connector' ); ?></h2>
 			<?php if ( empty( $log['entries'] ) ) : ?>
-				<p><?php esc_html_e( 'No actions yet.', 'website-manager-hermes-connector' ); ?></p>
+				<p><?php esc_html_e( 'No actions yet.', 'teamshift-connector' ); ?></p>
 			<?php else : ?>
 				<table class="widefat striped" style="max-width:1100px">
 					<thead>
 						<tr>
-							<th><?php esc_html_e( 'Time', 'website-manager-hermes-connector' ); ?></th>
-							<th><?php esc_html_e( 'User', 'website-manager-hermes-connector' ); ?></th>
-							<th><?php esc_html_e( 'Action', 'website-manager-hermes-connector' ); ?></th>
-							<th><?php esc_html_e( 'Items', 'website-manager-hermes-connector' ); ?></th>
-							<th><?php esc_html_e( 'Result', 'website-manager-hermes-connector' ); ?></th>
+							<th><?php esc_html_e( 'Time', 'teamshift-connector' ); ?></th>
+							<th><?php esc_html_e( 'User', 'teamshift-connector' ); ?></th>
+							<th><?php esc_html_e( 'Action', 'teamshift-connector' ); ?></th>
+							<th><?php esc_html_e( 'Items', 'teamshift-connector' ); ?></th>
+							<th><?php esc_html_e( 'Result', 'teamshift-connector' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -344,25 +344,25 @@ class Admin_Page {
 		}
 		?>
 		<div class="notice notice-success" id="wmhc-connection">
-			<p><strong><?php esc_html_e( 'Connection created. Copy this connection string into Hermes now.', 'website-manager-hermes-connector' ); ?></strong></p>
+			<p><strong><?php esc_html_e( 'Connection created. Copy this connection string into TeamShift now.', 'teamshift-connector' ); ?></strong></p>
 			<p>
 				<textarea id="wmhc-connection-string" class="large-text code" rows="3" readonly="readonly"><?php echo esc_textarea( $this->created['connection_string'] ); ?></textarea>
 			</p>
 			<p>
-				<button type="button" class="button button-secondary" id="wmhc-copy" data-target="wmhc-connection-string"><?php esc_html_e( 'Copy', 'website-manager-hermes-connector' ); ?></button>
+				<button type="button" class="button button-secondary" id="wmhc-copy" data-target="wmhc-connection-string"><?php esc_html_e( 'Copy', 'teamshift-connector' ); ?></button>
 				<span id="wmhc-copy-status" aria-live="polite"></span>
 			</p>
 			<p>
 				<?php
 				printf(
 					/* translators: 1: application password name, 2: link to the profile page */
-					esc_html__( 'It is shown only once and contains a password. It was saved as the Application Password "%1$s"; you can revoke it any time under %2$s.', 'website-manager-hermes-connector' ),
+					esc_html__( 'It is shown only once and contains a password. It was saved as the Application Password "%1$s"; you can revoke it any time under %2$s.', 'teamshift-connector' ),
 					esc_html( $this->created['name'] ),
-					'<a href="' . esc_url( $profile_url ) . '">' . esc_html__( 'Users → Profile → Application Passwords', 'website-manager-hermes-connector' ) . '</a>'
+					'<a href="' . esc_url( $profile_url ) . '">' . esc_html__( 'Users → Profile → Application Passwords', 'teamshift-connector' ) . '</a>'
 				);
 				?>
 			</p>
-			<p><?php esc_html_e( 'Paste it into the Hermes Desktop "Add site" dialog rather than into a chat.', 'website-manager-hermes-connector' ); ?></p>
+			<p><?php esc_html_e( 'Save it in TeamShift as a workspace secret rather than pasting it into a chat.', 'teamshift-connector' ); ?></p>
 		</div>
 		<?php
 	}

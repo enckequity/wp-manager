@@ -2,10 +2,10 @@
 /**
  * Connector settings (allowlist toggles).
  *
- * @package WebsiteManagerHermesConnector
+ * @package TeamShiftConnector
  */
 
-namespace WebsiteManagerHermesConnector;
+namespace TeamShiftConnector;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

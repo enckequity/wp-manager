@@ -1,6 +1,6 @@
 {
 	"$schema": "https://playground.wordpress.net/blueprint-schema.json",
-	"landingPage": "/wp-admin/tools.php?page=website-manager-hermes-connector",
+	"landingPage": "/wp-admin/tools.php?page=teamshift-connector",
 	"steps": [
 		{
 			"step": "defineWpConfigConsts",
@@ -44,7 +44,7 @@
 		},
 		{
 			"step": "activatePlugin",
-			"pluginPath": "website-manager-hermes-connector/website-manager-hermes-connector.php"
+			"pluginPath": "teamshift-connector/teamshift-connector.php"
 		},
 		{
 			"step": "runPHP",

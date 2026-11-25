@@ -11,7 +11,7 @@ e2e/lint.sh
 
 The start script uses `npx -y @wp-playground/cli@latest server`, mounts the connector, installs Classic Editor **1.6.3** (active), Hello Dolly **1.6** (inactive), and Twenty Twenty-Four **1.0** (active), sets `WP_ENVIRONMENT_TYPE=local`, and creates an admin Application Password via blueprint `runPHP`. Credentials are in **`.e2e-run/creds.json`**, inside a private, gitignored directory. Never commit them. Admin UI login for this throwaway site is `admin` / `password`. Do not expose this test server publicly.
 
-`verify.mjs` checks actual REST responses, pending versions from WordPress.org, real package downloads/installations, independent version/activity confirmation through core REST, the update lock, health/log, error paths, Abilities API list + execution, and the nonce-protected **Tools → Hermes Connector → Create connection for Hermes** flow. It decodes the `wpmh1:` string and uses that new credential to authenticate. Samples are written to `.e2e-run/samples/` with passwords redacted; summary to `.e2e-run/results.json`.
+`verify.mjs` checks actual REST responses, pending versions from WordPress.org, real package downloads/installations, independent version/activity confirmation through core REST, the update lock, health/log, error paths, Abilities API list + execution, and the nonce-protected **Tools → TeamShift Connector → Create connection for Hermes** flow. It decodes the `wpmh1:` string and uses that new credential to authenticate. Samples are written to `.e2e-run/samples/` with passwords redacted; summary to `.e2e-run/results.json`.
 
 Minimum versions and a real core update:
 

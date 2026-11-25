@@ -4,7 +4,7 @@ Historical run: **2026-11-05 UTC**, connector version **0.1.0**, against disposa
 
 ## Outcome
 
-The standard WordPress plugin **Website Manager: WP Connector for Hermes** is implemented at `connector/website-manager-hermes-connector/`. All five REST routes, per-type update operations, Abilities registrations, Tools admin page, one-time connection flow, settings, capped non-autoloaded log, and uninstall cleanup are present.
+The standard WordPress plugin **TeamShift Connector** is implemented at `connector/teamshift-connector/`. All five REST routes, per-type update operations, Abilities registrations, Tools admin page, one-time connection flow, settings, capped non-autoloaded log, and uninstall cleanup are present.
 
 The harness booted real WordPress in the official Playground CLI, with the connector mounted and old WordPress.org plugin/theme packages installed. No update responses or packages were mocked. Core's own HTTP/update APIs downloaded and installed the actual updates.
 
@@ -34,8 +34,8 @@ Actual extension changes:
 * A mixed plugin run returned `result:partial`, `success:false`, while its two real installed items succeeded and an unknown file reported `not_installed`. Item order preserved.
 * Unauthenticated and wrong-password requests returned **401**. Invalid type returned **400**. An unoffered core target returned **404**.
 * Major core updates refused by default (**403 `wmhc_major_core_updates_disabled`**). Allowed after toggling the real admin settings form (nonce-protected `options.php` POST). An automatic selection when only a blocked major offer exists returns an honest `skipped` result, not `up_to_date`.
-* `GET /wp-json/wp-abilities/v1/abilities?per_page=100` listed all three `website-manager-hermes/*` abilities on 7.1.4. Each execute endpoint worked. Anonymous execution was rejected. On WP 6.5 the Abilities route was absent and the connector continued to work.
-* Cookie login to `/wp-admin`, Tools → Hermes Connector page rendered with the menu link and recent actions. Bad nonce was rejected with 403. Good nonce created a `wpmh1:` connection string. It decoded to v/url/user/app_password (plus optional rest_url), and its new Application Password authenticated `/status`. A subsequent GET did not show the secret again. `connection.create` was logged without a password.
+* `GET /wp-json/wp-abilities/v1/abilities?per_page=100` listed all three `teamshift-connector/*` abilities on 7.1.4. Each execute endpoint worked. Anonymous execution was rejected. On WP 6.5 the Abilities route was absent and the connector continued to work.
+* Cookie login to `/wp-admin`, Tools → TeamShift Connector page rendered with the menu link and recent actions. Bad nonce was rejected with 403. Good nonce created a `wpmh1:` connection string. It decoded to v/url/user/app_password (plus optional rest_url), and its new Application Password authenticated `/status`. A subsequent GET did not show the secret again. `connection.create` was logged without a password.
 * Healthy `/health`: `status:ok`, database `SELECT 1` reachable, recovery/maintenance false, no paused extensions, no request-local error.
 * Update transients cleared by `Language_Pack_Upgrader` are repopulated; the automated verifier checks last-check timestamps remain populated after translations.
 
@@ -440,7 +440,7 @@ The following are actual recordings. All passwords are redacted. Full files are 
   "http_status": 403,
   "body": {
     "code": "wmhc_major_core_updates_disabled",
-    "message": "Major WordPress updates through Hermes are disabled in Tools → Hermes Connector.",
+    "message": "Major WordPress updates through Hermes are disabled in Tools → TeamShift Connector.",
     "data": {
       "status": 403
     }
@@ -754,8 +754,8 @@ The following are actual recordings. All passwords are redacted. Full files are 
 
 The three registered names from the real list response:
 
-* `website-manager-hermes/get-status`
-* `website-manager-hermes/list-updates`
-* `website-manager-hermes/run-updates`
+* `teamshift-connector/get-status`
+* `teamshift-connector/list-updates`
+* `teamshift-connector/run-updates`
 
 Full core list entries, schemas, annotations and execute links: [`abilities-list.json`](samples/abilities-list.json). Actual list/run execution response recordings: [`ability-list-updates.json`](samples/ability-list-updates.json), [`ability-run-updates.json`](samples/ability-run-updates.json).

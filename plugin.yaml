@@ -3,16 +3,16 @@ version: 0.1.4
 manifest_version: 2
 api_version: 1
 description: >-
-  Manage a fleet of WordPress sites from Hermes: scan for plugin, theme, core
+  Manage a fleet of WordPress sites from chat: scan for plugin, theme, core
   and translation updates, apply them behind an approval prompt with an
-  automatic health check afterwards, and create or edit posts and pages from
-  chat. Includes a Hermes Desktop page and pairs with the "Website Manager: WP
-  Connector for Hermes" WordPress plugin. Uses WordPress Application Passwords
-  kept in Hermes secrets. Takes no backups.
+  automatic health check afterwards, and create or edit posts and pages. Every
+  write asks first. Pairs with the "TeamShift Connector" WordPress plugin.
+  Uses WordPress Application Passwords kept in workspace secrets
+  (WPM_<SITE_ID>_APP_PASSWORD). Takes no backups.
 author: Daniel Wonder
 license: MIT
 homepage: https://github.com/danieljwonder/wp-manager
-tags: [wordpress, website, cms, updates, maintenance, content, desktop]
+tags: [wordpress, website, cms, updates, maintenance, content]
 requires_hermes: ">=0.22.5"
 provides_tools:
   - wp_sites

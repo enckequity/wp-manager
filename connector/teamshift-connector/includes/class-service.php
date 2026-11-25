@@ -2,10 +2,10 @@
 /**
  * Internal service shared by REST routes, abilities and the admin page.
  *
- * @package WebsiteManagerHermesConnector
+ * @package TeamShiftConnector
  */
 
-namespace WebsiteManagerHermesConnector;
+namespace TeamShiftConnector;
 
 use WP_Error;
 
@@ -21,7 +21,7 @@ class Service {
 	const UPDATE_TYPES          = array( 'plugin', 'theme', 'core', 'translations' );
 	const LOCK_NAME             = 'wmhc_updates';
 	const LOCK_TIMEOUT          = 900;
-	const APP_PASSWORD_NAME     = 'Hermes (website-manager)';
+	const APP_PASSWORD_NAME     = 'TeamShift Connector';
 	const CONNECTION_PREFIX     = 'wpmh1:';
 	const MAX_OUTPUT_CHARS      = 8000;
 	const CRON_OVERDUE_SECONDS  = 3600;
@@ -474,16 +474,16 @@ class Service {
 	 */
 	public function run_updates( $type, array $items = array(), $source = 'rest' ) {
 		if ( ! in_array( $type, self::UPDATE_TYPES, true ) ) {
-			return new WP_Error( 'wmhc_invalid_type', __( 'Invalid update type.', 'website-manager-hermes-connector' ), array( 'status' => 400 ) );
+			return new WP_Error( 'wmhc_invalid_type', __( 'Invalid update type.', 'teamshift-connector' ), array( 'status' => 400 ) );
 		}
 		if ( ! $this->current_user_can_update( $type ) ) {
-			return new WP_Error( 'wmhc_forbidden', __( 'You are not allowed to run this type of update.', 'website-manager-hermes-connector' ), array( 'status' => rest_authorization_required_code() ) );
+			return new WP_Error( 'wmhc_forbidden', __( 'You are not allowed to run this type of update.', 'teamshift-connector' ), array( 'status' => rest_authorization_required_code() ) );
 		}
 		if ( ! wp_is_file_mod_allowed( 'wmhc_run_updates' ) ) {
-			return new WP_Error( 'wmhc_file_mods_disallowed', __( 'File modifications are disabled on this site (DISALLOW_FILE_MODS).', 'website-manager-hermes-connector' ), array( 'status' => 403 ) );
+			return new WP_Error( 'wmhc_file_mods_disallowed', __( 'File modifications are disabled on this site (DISALLOW_FILE_MODS).', 'teamshift-connector' ), array( 'status' => 403 ) );
 		}
 		if ( 'core' === $type && ! $this->settings->get( 'allow_core_updates' ) ) {
-			return new WP_Error( 'wmhc_core_updates_disabled', __( 'Core updates through Hermes are disabled in Tools → Hermes Connector.', 'website-manager-hermes-connector' ), array( 'status' => 403 ) );
+			return new WP_Error( 'wmhc_core_updates_disabled', __( 'Core updates through TeamShift are disabled in Tools → TeamShift Connector.', 'teamshift-connector' ), array( 'status' => 403 ) );
 		}
 
 		$items = array_values( array_unique( array_filter( array_map( array( $this, 'sanitize_item' ), $items ), 'strlen' ) ) );
@@ -492,7 +492,7 @@ class Service {
 		$this->load_upgrader();
 
 		if ( ! \WP_Upgrader::create_lock( self::LOCK_NAME, self::LOCK_TIMEOUT ) ) {
-			return new WP_Error( 'wmhc_locked', __( 'Another update run is in progress. Try again in a few minutes.', 'website-manager-hermes-connector' ), array( 'status' => 409 ) );
+			return new WP_Error( 'wmhc_locked', __( 'Another update run is in progress. Try again in a few minutes.', 'teamshift-connector' ), array( 'status' => 409 ) );
 		}
 
 		// Observable transient marker, backed by the atomic core option lock above.
@@ -626,7 +626,7 @@ class Service {
 		$before  = array();
 		foreach ( $items as $file ) {
 			if ( 0 !== validate_file( $file ) || ! isset( $installed[ $file ] ) ) {
-				$results[ $file ] = $this->item_result( $file, null, null, false, 'not_installed', __( 'Plugin is not installed.', 'website-manager-hermes-connector' ) );
+				$results[ $file ] = $this->item_result( $file, null, null, false, 'not_installed', __( 'Plugin is not installed.', 'teamshift-connector' ) );
 				continue;
 			}
 			$to_run[]        = $file;
@@ -662,7 +662,7 @@ class Service {
 				$active_now  = is_plugin_active( $file );
 				if ( is_wp_error( $activation ) ) {
 					$entry['success'] = false;
-					$entry['error']   = trim( $entry['error'] . ' ' . sprintf( /* translators: %s: error message */ __( 'Reactivation failed: %s', 'website-manager-hermes-connector' ), $activation->get_error_message() ) );
+					$entry['error']   = trim( $entry['error'] . ' ' . sprintf( /* translators: %s: error message */ __( 'Reactivation failed: %s', 'teamshift-connector' ), $activation->get_error_message() ) );
 				}
 			}
 
@@ -712,7 +712,7 @@ class Service {
 		foreach ( $items as $stylesheet ) {
 			$theme = wp_get_theme( $stylesheet );
 			if ( 0 !== validate_file( $stylesheet ) || ! $theme->exists() ) {
-				$results[ $stylesheet ] = $this->item_result( $stylesheet, null, null, false, 'not_installed', __( 'Theme is not installed.', 'website-manager-hermes-connector' ) );
+				$results[ $stylesheet ] = $this->item_result( $stylesheet, null, null, false, 'not_installed', __( 'Theme is not installed.', 'teamshift-connector' ) );
 				continue;
 			}
 			$to_run[]              = $stylesheet;
@@ -788,7 +788,7 @@ class Service {
 
 		if ( null === $chosen ) {
 			if ( '' !== $target ) {
-				return new WP_Error( 'wmhc_no_core_update', __( 'That WordPress version is not offered as an update.', 'website-manager-hermes-connector' ), array( 'status' => 404 ) );
+				return new WP_Error( 'wmhc_no_core_update', __( 'That WordPress version is not offered as an update.', 'teamshift-connector' ), array( 'status' => 404 ) );
 			}
 			$blocked = array();
 			foreach ( $offers as $offer ) {
@@ -802,7 +802,7 @@ class Service {
 				$entry['messages'] = array(
 					sprintf(
 						/* translators: %s: WordPress version(s) */
-						__( 'Major WordPress update available (%s) but major core updates are disabled in Tools → Hermes Connector.', 'website-manager-hermes-connector' ),
+						__( 'Major WordPress update available (%s) but major core updates are disabled in Tools → TeamShift Connector.', 'teamshift-connector' ),
 						implode( ', ', array_unique( $blocked ) )
 					),
 				);
@@ -812,7 +812,7 @@ class Service {
 		}
 
 		if ( $this->is_major_core_update( $current_version, $chosen->current ) && ! $allow_major ) {
-			return new WP_Error( 'wmhc_major_core_updates_disabled', __( 'Major WordPress updates through Hermes are disabled in Tools → Hermes Connector.', 'website-manager-hermes-connector' ), array( 'status' => 403 ) );
+			return new WP_Error( 'wmhc_major_core_updates_disabled', __( 'Major WordPress updates through TeamShift are disabled in Tools → TeamShift Connector.', 'teamshift-connector' ), array( 'status' => 403 ) );
 		}
 
 		$upgrader = new \Core_Upgrader( $skin );
@@ -825,7 +825,7 @@ class Service {
 		if ( is_wp_error( $raw ) ) {
 			$error = $raw->get_error_message();
 		} elseif ( ! $success ) {
-			$error = $errors ? implode( ' ', $errors ) : __( 'Core update failed.', 'website-manager-hermes-connector' );
+			$error = $errors ? implode( ' ', $errors ) : __( 'Core update failed.', 'teamshift-connector' );
 		}
 
 		$entry = $this->item_result( 'core', $current_version, $to_version, $success, $success ? 'updated' : 'failed', $error );
@@ -903,13 +903,13 @@ class Service {
 			return $this->item_result( $item, null, null, false, 'failed', $raw->get_error_message() );
 		}
 		if ( $not_attempted ) {
-			return $this->item_result( $item, null, null, false, 'skipped', __( 'Not attempted because an earlier item failed.', 'website-manager-hermes-connector' ) );
+			return $this->item_result( $item, null, null, false, 'skipped', __( 'Not attempted because an earlier item failed.', 'teamshift-connector' ) );
 		}
 		if ( ! empty( $raw ) && empty( $errors ) ) {
 			return $this->item_result( $item, null, null, true, 'updated', null );
 		}
 		$messages = array_merge( $errors, $global_errors );
-		$message  = $messages ? implode( ' ', array_unique( $messages ) ) : __( 'Update failed.', 'website-manager-hermes-connector' );
+		$message  = $messages ? implode( ' ', array_unique( $messages ) ) : __( 'Update failed.', 'teamshift-connector' );
 		return $this->item_result( $item, null, null, false, 'failed', $message );
 	}
 
@@ -1055,7 +1055,7 @@ class Service {
 		if ( '1' === (string) $probe ) {
 			$db_ok = true;
 		} else {
-			$db_error = $wpdb->last_error ? wp_strip_all_tags( $wpdb->last_error ) : __( 'Database probe returned no result.', 'website-manager-hermes-connector' );
+			$db_error = $wpdb->last_error ? wp_strip_all_tags( $wpdb->last_error ) : __( 'Database probe returned no result.', 'teamshift-connector' );
 		}
 
 		$cron = $this->cron_health();
@@ -1240,16 +1240,16 @@ class Service {
 	 */
 	public function create_connection( \WP_User $user ) {
 		if ( ! class_exists( 'WP_Application_Passwords' ) || ! wp_is_application_passwords_available_for_user( $user ) ) {
-			return new WP_Error( 'wmhc_app_passwords_unavailable', __( 'Application Passwords are not available for this user. They require HTTPS or a local environment, and may be disabled by a plugin.', 'website-manager-hermes-connector' ) );
+			return new WP_Error( 'wmhc_app_passwords_unavailable', __( 'Application Passwords are not available for this user. They require HTTPS or a local environment, and may be disabled by a plugin.', 'teamshift-connector' ) );
 		}
 		if ( ! current_user_can( 'create_app_password', $user->ID ) ) {
-			return new WP_Error( 'wmhc_forbidden', __( 'You are not allowed to create application passwords.', 'website-manager-hermes-connector' ) );
+			return new WP_Error( 'wmhc_forbidden', __( 'You are not allowed to create application passwords.', 'teamshift-connector' ) );
 		}
 
 		$name = self::APP_PASSWORD_NAME;
 		if ( \WP_Application_Passwords::application_name_exists_for_user( $user->ID, $name ) ) {
 			/* translators: %s: date and time (UTC). */
-			$name = sprintf( __( 'Hermes (website-manager) %s', 'website-manager-hermes-connector' ), gmdate( 'Y-m-d H:i:s' ) );
+			$name = sprintf( __( 'TeamShift Connector %s', 'teamshift-connector' ), gmdate( 'Y-m-d H:i:s' ) );
 		}
 
 		$created = \WP_Application_Passwords::create_new_application_password( $user->ID, array( 'name' => $name ) );
@@ -1276,7 +1276,7 @@ class Service {
 	}
 
 	/**
-	 * Existing Hermes application passwords for a user (no secrets).
+	 * Existing TeamShift application passwords for a user (no secrets).
 	 *
 	 * @param int $user_id User id.
 	 * @return array<int, array<string, mixed>>
@@ -1287,7 +1287,7 @@ class Service {
 		}
 		$out = array();
 		foreach ( \WP_Application_Passwords::get_user_application_passwords( $user_id ) as $item ) {
-			if ( 0 !== strpos( $item['name'], 'Hermes (website-manager)' ) ) {
+			if ( 0 !== strpos( $item['name'], 'TeamShift Connector' ) ) {
 				continue;
 			}
 			$out[] = array(
@@ -1316,23 +1316,23 @@ class Service {
 		return array(
 			'https'                 => array(
 				'ok'     => $https || $local,
-				'label'  => __( 'HTTPS', 'website-manager-hermes-connector' ),
-				'detail' => $https ? __( 'The site uses HTTPS.', 'website-manager-hermes-connector' ) : ( $local ? __( 'No HTTPS, but this is a local environment.', 'website-manager-hermes-connector' ) : __( 'The site does not use HTTPS. Application Passwords need HTTPS.', 'website-manager-hermes-connector' ) ),
+				'label'  => __( 'HTTPS', 'teamshift-connector' ),
+				'detail' => $https ? __( 'The site uses HTTPS.', 'teamshift-connector' ) : ( $local ? __( 'No HTTPS, but this is a local environment.', 'teamshift-connector' ) : __( 'The site does not use HTTPS. Application Passwords need HTTPS.', 'teamshift-connector' ) ),
 			),
 			'application_passwords' => array(
 				'ok'     => $app_pw,
-				'label'  => __( 'Application Passwords', 'website-manager-hermes-connector' ),
-				'detail' => $app_pw ? __( 'Available.', 'website-manager-hermes-connector' ) : __( 'Not available (needs HTTPS or a local environment, or disabled by a plugin).', 'website-manager-hermes-connector' ),
+				'label'  => __( 'Application Passwords', 'teamshift-connector' ),
+				'detail' => $app_pw ? __( 'Available.', 'teamshift-connector' ) : __( 'Not available (needs HTTPS or a local environment, or disabled by a plugin).', 'teamshift-connector' ),
 			),
 			'rest_api'              => array(
 				'ok'     => true,
-				'label'  => __( 'REST API', 'website-manager-hermes-connector' ),
-				'detail' => $pretty ? rest_url( WMHC_REST_NAMESPACE ) : __( 'Plain permalinks: Hermes must use the ?rest_route= form of the REST URL.', 'website-manager-hermes-connector' ),
+				'label'  => __( 'REST API', 'teamshift-connector' ),
+				'detail' => $pretty ? rest_url( WMHC_REST_NAMESPACE ) : __( 'Plain permalinks: TeamShift must use the ?rest_route= form of the REST URL.', 'teamshift-connector' ),
 			),
 			'file_mods'             => array(
 				'ok'     => $file_mods && 'direct' === $fs_method,
-				'label'  => __( 'Updates possible', 'website-manager-hermes-connector' ),
-				'detail' => ! $file_mods ? __( 'File modifications are disabled (DISALLOW_FILE_MODS).', 'website-manager-hermes-connector' ) : sprintf( /* translators: %s: filesystem method */ __( 'Filesystem method: %s (updates without prompts need "direct" or stored FTP credentials).', 'website-manager-hermes-connector' ), $fs_method ),
+				'label'  => __( 'Updates possible', 'teamshift-connector' ),
+				'detail' => ! $file_mods ? __( 'File modifications are disabled (DISALLOW_FILE_MODS).', 'teamshift-connector' ) : sprintf( /* translators: %s: filesystem method */ __( 'Filesystem method: %s (updates without prompts need "direct" or stored FTP credentials).', 'teamshift-connector' ), $fs_method ),
 			),
 		);
 	}

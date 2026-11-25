@@ -35,7 +35,7 @@ def hermes_home() -> Path:
     env = os.environ.get("HERMES_HOME", "").strip()
     if env:
         return Path(env)
-    raise HomeUnavailable("cannot resolve the Hermes home directory (run inside Hermes or set HERMES_HOME)")
+    raise HomeUnavailable("cannot resolve the workspace home directory")
 
 
 def data_dir() -> Path:

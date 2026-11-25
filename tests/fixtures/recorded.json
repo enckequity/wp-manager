@@ -105,7 +105,7 @@
      "name": "WMHC E2E",
      "namespaces": [
       "oembed/1.0",
-      "website-manager-hermes/v1",
+      "teamshift-connector/v1",
       "wp/v2",
       "wp-site-health/v1",
       "wp-block-editor/v1",
@@ -334,11 +334,11 @@
        ],
        "namespace": "oembed/1.0"
       },
-      "/website-manager-hermes/v1": {
+      "/teamshift-connector/v1": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1"
          }
         ]
        },
@@ -350,7 +350,7 @@
            "required": false
           },
           "namespace": {
-           "default": "website-manager-hermes/v1",
+           "default": "teamshift-connector/v1",
            "required": false
           }
          },
@@ -362,13 +362,13 @@
        "methods": [
         "GET"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
-      "/website-manager-hermes/v1/health": {
+      "/teamshift-connector/v1/health": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1/health"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1/health"
          }
         ]
        },
@@ -383,13 +383,13 @@
        "methods": [
         "GET"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
-      "/website-manager-hermes/v1/log": {
+      "/teamshift-connector/v1/log": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1/log"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1/log"
          }
         ]
        },
@@ -412,13 +412,13 @@
        "methods": [
         "GET"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
-      "/website-manager-hermes/v1/status": {
+      "/teamshift-connector/v1/status": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1/status"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1/status"
          }
         ]
        },
@@ -433,13 +433,13 @@
        "methods": [
         "GET"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
-      "/website-manager-hermes/v1/updates": {
+      "/teamshift-connector/v1/updates": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1/updates"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1/updates"
          }
         ]
        },
@@ -489,7 +489,7 @@
         "GET",
         "POST"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
       "/wp-abilities/v1": {
        "_links": {
@@ -13439,7 +13439,7 @@
      "name": "WMHC E2E",
      "namespaces": [
       "oembed/1.0",
-      "website-manager-hermes/v1",
+      "teamshift-connector/v1",
       "wp/v2",
       "wp-site-health/v1",
       "wp-block-editor/v1",
@@ -13668,11 +13668,11 @@
        ],
        "namespace": "oembed/1.0"
       },
-      "/website-manager-hermes/v1": {
+      "/teamshift-connector/v1": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1"
          }
         ]
        },
@@ -13684,7 +13684,7 @@
            "required": false
           },
           "namespace": {
-           "default": "website-manager-hermes/v1",
+           "default": "teamshift-connector/v1",
            "required": false
           }
          },
@@ -13696,13 +13696,13 @@
        "methods": [
         "GET"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
-      "/website-manager-hermes/v1/health": {
+      "/teamshift-connector/v1/health": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1/health"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1/health"
          }
         ]
        },
@@ -13717,13 +13717,13 @@
        "methods": [
         "GET"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
-      "/website-manager-hermes/v1/log": {
+      "/teamshift-connector/v1/log": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1/log"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1/log"
          }
         ]
        },
@@ -13746,13 +13746,13 @@
        "methods": [
         "GET"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
-      "/website-manager-hermes/v1/status": {
+      "/teamshift-connector/v1/status": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1/status"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1/status"
          }
         ]
        },
@@ -13767,13 +13767,13 @@
        "methods": [
         "GET"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
-      "/website-manager-hermes/v1/updates": {
+      "/teamshift-connector/v1/updates": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1/updates"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1/updates"
          }
         ]
        },
@@ -13823,7 +13823,7 @@
         "GET",
         "POST"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
       "/wp-abilities/v1": {
        "_links": {
@@ -26773,7 +26773,7 @@
      "name": "WMHC E2E",
      "namespaces": [
       "oembed/1.0",
-      "website-manager-hermes/v1",
+      "teamshift-connector/v1",
       "wp/v2",
       "wp-site-health/v1",
       "wp-block-editor/v1",
@@ -27002,11 +27002,11 @@
        ],
        "namespace": "oembed/1.0"
       },
-      "/website-manager-hermes/v1": {
+      "/teamshift-connector/v1": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1"
          }
         ]
        },
@@ -27018,7 +27018,7 @@
            "required": false
           },
           "namespace": {
-           "default": "website-manager-hermes/v1",
+           "default": "teamshift-connector/v1",
            "required": false
           }
          },
@@ -27030,13 +27030,13 @@
        "methods": [
         "GET"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
-      "/website-manager-hermes/v1/health": {
+      "/teamshift-connector/v1/health": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1/health"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1/health"
          }
         ]
        },
@@ -27051,13 +27051,13 @@
        "methods": [
         "GET"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
-      "/website-manager-hermes/v1/log": {
+      "/teamshift-connector/v1/log": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1/log"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1/log"
          }
         ]
        },
@@ -27080,13 +27080,13 @@
        "methods": [
         "GET"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
-      "/website-manager-hermes/v1/status": {
+      "/teamshift-connector/v1/status": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1/status"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1/status"
          }
         ]
        },
@@ -27101,13 +27101,13 @@
        "methods": [
         "GET"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
-      "/website-manager-hermes/v1/updates": {
+      "/teamshift-connector/v1/updates": {
        "_links": {
         "self": [
          {
-          "href": "http://127.0.0.1:9400/wp-json/website-manager-hermes/v1/updates"
+          "href": "http://127.0.0.1:9400/wp-json/teamshift-connector/v1/updates"
          }
         ]
        },
@@ -27157,7 +27157,7 @@
         "GET",
         "POST"
        ],
-       "namespace": "website-manager-hermes/v1"
+       "namespace": "teamshift-connector/v1"
       },
       "/wp-abilities/v1": {
        "_links": {
@@ -40086,7 +40086,7 @@
     "status": 200
    }
   ],
-  "GET /wp-json/website-manager-hermes/v1/health": [
+  "GET /wp-json/teamshift-connector/v1/health": [
    {
     "body": {
      "checked_at": "2026-11-05T23:27:18+00:00",
@@ -40190,7 +40190,7 @@
     "status": 200
    }
   ],
-  "GET /wp-json/website-manager-hermes/v1/status": [
+  "GET /wp-json/teamshift-connector/v1/status": [
    {
     "body": {
      "abilities_api": true,
@@ -40497,7 +40497,7 @@
     "status": 200
    }
   ],
-  "GET /wp-json/website-manager-hermes/v1/updates": [
+  "GET /wp-json/teamshift-connector/v1/updates": [
    {
     "body": {
      "core": [],
@@ -40680,7 +40680,7 @@
     "status": 200
    }
   ],
-  "GET /wp-json/website-manager-hermes/v1/updates?refresh=1": [
+  "GET /wp-json/teamshift-connector/v1/updates?refresh=1": [
    {
     "body": {
      "core": [],
@@ -41654,7 +41654,7 @@
     "status": 200
    }
   ],
-  "POST /wp-json/website-manager-hermes/v1/updates": [
+  "POST /wp-json/teamshift-connector/v1/updates": [
    {
     "body": {
      "duration_ms": 3548,

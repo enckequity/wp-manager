@@ -2,7 +2,7 @@
 // Core-update checks. Run against an OLD WordPress so an update is offered:
 //   WMHC_E2E_WP=6.5 WMHC_E2E_PHP=7.4 e2e/start-playground.sh && node e2e/verify-core.mjs
 // 1. major update refused while "allow major core updates" is off (default)
-// 2. toggles the setting through the real Tools → Hermes Connector form (options.php + nonce)
+// 2. toggles the setting through the real Tools → TeamShift Connector form (options.php + nonce)
 // 3. runs the core update through POST /updates and checks the new version.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -14,7 +14,7 @@ const SAMPLES = join(RUN, 'samples-core');
 mkdirSync(SAMPLES, { recursive: true });
 const creds = JSON.parse(readFileSync(join(RUN, 'creds.json'), 'utf8'));
 const BASE = creds.url.replace(/\/$/, '');
-const NS = `${BASE}/wp-json/website-manager-hermes/v1`;
+const NS = `${BASE}/wp-json/teamshift-connector/v1`;
 const AUTH = 'Basic ' + Buffer.from(`${creds.user}:${creds.app_password}`).toString('base64');
 const redact = (t) => t.split(creds.app_password).join('[REDACTED]');
 const save = (n, d) => writeFileSync(join(SAMPLES, `${n}.json`), redact(JSON.stringify(d, null, 2)) + '\n');
@@ -62,12 +62,12 @@ async function browser(method, url, form) {
   return { status: res.status, text: await res.text(), location: res.headers.get('location') };
 }
 await browser('POST', `${BASE}/wp-login.php`, { log: 'admin', pwd: creds.admin_password || 'password', 'wp-submit': 'Log In', redirect_to: `${BASE}/wp-admin/`, testcookie: '1' });
-const page = await browser('GET', `${BASE}/wp-admin/tools.php?page=website-manager-hermes-connector`);
+const page = await browser('GET', `${BASE}/wp-admin/tools.php?page=teamshift-connector`);
 const optNonce = (page.text.match(/name='option_page' value='wmhc_settings_group'[\s\S]*?name="_wpnonce" value="([0-9a-f]+)"/) || [])[1];
 check('settings form present with nonce', !!optNonce);
 const saved = await browser('POST', `${BASE}/wp-admin/options.php`, {
   option_page: 'wmhc_settings_group', action: 'update', _wpnonce: optNonce,
-  _wp_http_referer: '/wp-admin/tools.php?page=website-manager-hermes-connector',
+  _wp_http_referer: '/wp-admin/tools.php?page=teamshift-connector',
   'wmhc_settings[allow_core_updates]': '1', 'wmhc_settings[allow_major_core_updates]': '1',
 });
 check('settings saved via options.php (302 back to the page)', saved.status === 302 && (saved.location || '').includes('settings-updated=true'), `HTTP ${saved.status} ${saved.location}`);

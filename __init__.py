@@ -1,7 +1,7 @@
-"""wp-manager — manage a fleet of WordPress sites from Hermes Agent.
+"""wp-manager — manage a fleet of WordPress sites from chat (TeamShift build).
 
 Plugin/theme/core/translation updates with an approval gate and post-update health checks, plus
-post and page editing, through the "Website Manager: WP Connector for Hermes" WordPress plugin and
+post and page editing, through the "TeamShift Connector" WordPress plugin and
 core Application Passwords. Takes no backups.
 """
 

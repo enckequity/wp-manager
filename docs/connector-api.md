@@ -4,9 +4,9 @@ Source of truth for the Python client. These shapes were exercised against real 
 
 ## Transport and authentication
 
-* Namespace: `website-manager-hermes/v1`.
-* With pretty permalinks: `<site>/wp-json/website-manager-hermes/v1/<route>`.
-* With plain permalinks: `<site>/?rest_route=/website-manager-hermes/v1/<route>`; append query args with `&`.
+* Namespace: `teamshift-connector/v1`.
+* With pretty permalinks: `<site>/wp-json/teamshift-connector/v1/<route>`.
+* With plain permalinks: `<site>/?rest_route=/teamshift-connector/v1/<route>`; append query args with `&`.
 * All routes require an authenticated WordPress user. Use core **Application Passwords**, HTTP Basic auth (`Authorization: Basic base64(username:application_password)`) over **HTTPS**. Local HTTP works when `WP_ENVIRONMENT_TYPE=local`.
 * Cookie authentication is also supported by core (send `X-WP-Nonce: <wp_rest nonce>`). Basic-auth requests do **not** need a REST nonce: core authenticates each request using the Application Password.
 * Send `Accept: application/json`; send `Content-Type: application/json` for POST.
@@ -287,17 +287,17 @@ List: `GET /wp-json/wp-abilities/v1/abilities?per_page=100` (look for the three 
 
 | Name | Execute endpoint | Input |
 |---|---|---|
-| `website-manager-hermes/get-status` | `GET /wp-json/wp-abilities/v1/abilities/website-manager-hermes/get-status/run` | none |
-| `website-manager-hermes/list-updates` | `GET …/list-updates/run?input[refresh]=false` | optional `{refresh:bool}` |
-| `website-manager-hermes/run-updates` | `POST …/run-updates/run` | JSON `{"input":{"type":"plugin","items":["hello-dolly/hello.php"]}}` |
+| `teamshift-connector/get-status` | `GET /wp-json/wp-abilities/v1/abilities/teamshift-connector/get-status/run` | none |
+| `teamshift-connector/list-updates` | `GET …/list-updates/run?input[refresh]=false` | optional `{refresh:bool}` |
+| `teamshift-connector/run-updates` | `POST …/run-updates/run` | JSON `{"input":{"type":"plugin","items":["hello-dolly/hello.php"]}}` |
 
-All category `website-manager-hermes`, `show_in_rest:true`, public/discoverable in WP 7.1+ and marked `mcp.public:true` for the WordPress MCP Adapter. **Public here means discoverable, not unauthenticated execution**; permission callbacks still guard every execution. `get-status`/`list-updates`: annotations `{readonly:true,destructive:false,idempotent:true}`. `run-updates`: `{readonly:false,destructive:true,idempotent:false}` so core uses POST. Input schemas reject additional properties. Errors are core ability errors (`ability_invalid_input`, `rest_ability_cannot_execute`, etc.).
+All category `teamshift-connector`, `show_in_rest:true`, public/discoverable in WP 7.1+ and marked `mcp.public:true` for the WordPress MCP Adapter. **Public here means discoverable, not unauthenticated execution**; permission callbacks still guard every execution. `get-status`/`list-updates`: annotations `{readonly:true,destructive:false,idempotent:true}`. `run-updates`: `{readonly:false,destructive:true,idempotent:false}` so core uses POST. Input schemas reject additional properties. Errors are core ability errors (`ability_invalid_input`, `rest_ability_cannot_execute`, etc.).
 
 MCP Adapter itself was not installed/tested; the core Abilities list and all three execute endpoints were verified.
 
 ## Admin connection string
 
-Tools → Hermes Connector creates a normal Application Password for the current user, nonce + `manage_options` + `create_app_password` capability checked. The name is `Hermes (website-manager)` (a UTC timestamp suffix if one already exists).
+Tools → TeamShift Connector creates a normal Application Password for the current user, nonce + `manage_options` + `create_app_password` capability checked. The name is `TeamShift Connector` (a UTC timestamp suffix if one already exists).
 
 Format: `wpmh1:` followed by **standard base64** of UTF-8 JSON:
 

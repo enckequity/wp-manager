@@ -23,7 +23,7 @@ class IntegrationContract(unittest.TestCase):
         for name in ("verify installed plugin:classic-editor/classic-editor.php",
                      "verify installed theme:twentytwentyfour", "verify edited draft"):
             self.assertTrue(steps[name])
-        runs = data["responses"]["POST /wp-json/website-manager-hermes/v1/updates"]
+        runs = data["responses"]["POST /wp-json/teamshift-connector/v1/updates"]
         self.assertEqual(len(runs), 2)
         for response in runs:
             run = connector.normalize_run(response["body"])

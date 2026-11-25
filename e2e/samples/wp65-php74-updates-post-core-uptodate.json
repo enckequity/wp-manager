@@ -17,7 +17,7 @@
         "error": null,
         "db_upgrade_required": false,
         "messages": [
-          "Major WordPress update available (7.1.4) but major core updates are disabled in Tools → Hermes Connector."
+          "Major WordPress update available (7.1.4) but major core updates are disabled in Tools → TeamShift Connector."
         ]
       }
     ],

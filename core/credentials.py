@@ -104,7 +104,7 @@ def decode_connection_string(raw: Any) -> dict:
         decoded = base64.b64decode(payload.replace("-", "+").replace("_", "/"), validate=True)
         data = json.loads(decoded.decode("utf-8"))
     except (binascii.Error, ValueError, UnicodeDecodeError) as exc:
-        raise CredentialError("connection string is damaged (copy it again from Tools → Hermes Connector)") from exc
+        raise CredentialError("connection string is damaged (copy it again from Tools → TeamShift Connector)") from exc
     if not isinstance(data, dict) or str(data.get("v")) != "1":
         raise CredentialError("unsupported connection string version")
     url, user, pw = data.get("url"), data.get("user"), data.get("app_password")

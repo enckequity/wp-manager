@@ -6,7 +6,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$HERE")"
-CONNECTOR="$ROOT/connector/website-manager-hermes-connector"
+CONNECTOR="$ROOT/connector/teamshift-connector"
 VERSIONS="${WMHC_LINT_PHP:-8.3 7.4}"
 status=0
 

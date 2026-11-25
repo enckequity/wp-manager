@@ -2,10 +2,10 @@
 /**
  * Abilities API registration (WordPress 6.9+).
  *
- * @package WebsiteManagerHermesConnector
+ * @package TeamShiftConnector
  */
 
-namespace WebsiteManagerHermesConnector;
+namespace TeamShiftConnector;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Abilities {
 
-	const CATEGORY = 'website-manager-hermes';
+	const CATEGORY = 'teamshift-connector';
 
 	/**
 	 * Shared service.
@@ -47,8 +47,8 @@ class Abilities {
 		wp_register_ability_category(
 			self::CATEGORY,
 			array(
-				'label'       => __( 'Website maintenance (Hermes)', 'website-manager-hermes-connector' ),
-				'description' => __( 'Check and run WordPress updates for the Hermes website manager.', 'website-manager-hermes-connector' ),
+				'label'       => __( 'Website maintenance (TeamShift)', 'teamshift-connector' ),
+				'description' => __( 'Check and run WordPress updates for the TeamShift website manager.', 'teamshift-connector' ),
 			)
 		);
 	}
@@ -64,10 +64,10 @@ class Abilities {
 		}
 
 		wp_register_ability(
-			'website-manager-hermes/get-status',
+			'teamshift-connector/get-status',
 			array(
-				'label'               => __( 'Get site status', 'website-manager-hermes-connector' ),
-				'description'         => __( 'Returns connector, WordPress and PHP versions, environment, active theme and pending update counts.', 'website-manager-hermes-connector' ),
+				'label'               => __( 'Get site status', 'teamshift-connector' ),
+				'description'         => __( 'Returns connector, WordPress and PHP versions, environment, active theme and pending update counts.', 'teamshift-connector' ),
 				'category'            => self::CATEGORY,
 				'output_schema'       => array( 'type' => 'object' ),
 				'execute_callback'    => array( $this, 'execute_get_status' ),
@@ -88,17 +88,17 @@ class Abilities {
 		);
 
 		wp_register_ability(
-			'website-manager-hermes/list-updates',
+			'teamshift-connector/list-updates',
 			array(
-				'label'               => __( 'List available updates', 'website-manager-hermes-connector' ),
-				'description'         => __( 'Lists available core, plugin, theme and translation updates. Set refresh to true to check WordPress.org first.', 'website-manager-hermes-connector' ),
+				'label'               => __( 'List available updates', 'teamshift-connector' ),
+				'description'         => __( 'Lists available core, plugin, theme and translation updates. Set refresh to true to check WordPress.org first.', 'teamshift-connector' ),
 				'category'            => self::CATEGORY,
 				'input_schema'        => array(
 					'type'                 => 'object',
 					'properties'           => array(
 						'refresh' => array(
 							'type'        => 'boolean',
-							'description' => __( 'Force a fresh update check.', 'website-manager-hermes-connector' ),
+							'description' => __( 'Force a fresh update check.', 'teamshift-connector' ),
 							'default'     => false,
 						),
 					),
@@ -124,10 +124,10 @@ class Abilities {
 		);
 
 		wp_register_ability(
-			'website-manager-hermes/run-updates',
+			'teamshift-connector/run-updates',
 			array(
-				'label'               => __( 'Run updates', 'website-manager-hermes-connector' ),
-				'description'         => __( 'Updates plugins, themes, WordPress core or translations using the core upgraders. Items empty means all of that type. Take a backup first.', 'website-manager-hermes-connector' ),
+				'label'               => __( 'Run updates', 'teamshift-connector' ),
+				'description'         => __( 'Updates plugins, themes, WordPress core or translations using the core upgraders. Items empty means all of that type. Take a backup first.', 'teamshift-connector' ),
 				'category'            => self::CATEGORY,
 				'input_schema'        => array(
 					'type'                 => 'object',

@@ -27,8 +27,8 @@ client reports, staging sites or malware scans.
   `wp_content_save`.
 - **A WP Manager page in Hermes Desktop**: all your sites in one table (versions, pending updates,
   health, last check), with buttons to scan, update, add sites and download the connector.
-- **The connector**: a small WordPress plugin, *Website Manager: WP Connector for Hermes*, that
-  you install on each site. It lives in `connector/website-manager-hermes-connector/`.
+- **The connector**: a small WordPress plugin, *TeamShift Connector*, that
+  you install on each site. It lives in `connector/teamshift-connector/`.
 - **A built-in skill** that teaches the agent the safe way to run updates and to edit block-editor
   content without breaking page layouts.
 
@@ -67,10 +67,10 @@ there, but the Desktop page must also exist on the computer running Desktop. Ins
 1. **Install the connector on the site.** In Desktop, the WP Manager page's **Get connector**
    button saves the plugin zip. On the site, go to **Plugins → Add New → Upload Plugin**, choose
    the zip, then install and activate it.
-2. **Create a connection.** In wp-admin, open **Tools → Hermes Connector** and click **Create
+2. **Create a connection.** In wp-admin, open **Tools → TeamShift Connector** and click **Create
    connection for Hermes**. WordPress creates an
    [Application Password](https://make.wordpress.org/core/2020/11/05/application-passwords-integration-guide/)
-   called "Hermes (website-manager)" and shows a one-time connection string starting with `wpmh1:`.
+   called "TeamShift Connector" and shows a one-time connection string starting with `wpmh1:`.
    Copy it. It is shown only once.
 3. **Add the site in Hermes Desktop.** Open **WP Manager → Add site**, paste the connection string
    and choose where the password is kept: **1Password** (a new item in a vault you pick) or
@@ -88,7 +88,7 @@ error and **Retry**, not an all-clear message. Update controls stay disabled unt
 list is available. Health remains **Not checked yet** until you run a health check separately.
 
 You can revoke access at any time: in wp-admin, go to **Users → Profile → Application
-Passwords** and revoke "Hermes (website-manager)". wp-manager never uses or asks for your
+Passwords** and revoke "TeamShift Connector". wp-manager never uses or asks for your
 WordPress login password.
 
 ## Where the password is kept

@@ -1,7 +1,7 @@
 /**
- * Tools → Hermes Connector page helpers: copy button and REST reachability check.
+ * Tools → TeamShift Connector page helpers: copy button and REST reachability check.
  *
- * @package WebsiteManagerHermesConnector
+ * @package TeamShiftConnector
  */
 ( function () {
 	'use strict';

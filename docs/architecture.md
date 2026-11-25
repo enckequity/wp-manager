@@ -14,7 +14,7 @@ or malware-scanning subsystem.
 | `core/` | Shared registry, credentials, HTTP transport, normalization, operations, health and state |
 | `dashboard/plugin_api.py` | FastAPI router mounted by Hermes at `/api/plugins/wp-manager/` |
 | `desktop/plugin.js` | Desktop SDK page, site dialogs, scans, confirmations and connector downloads; no build step |
-| `connector/website-manager-hermes-connector/` | Standard WordPress plugin with REST routes, optional Abilities API integration and admin connection UI |
+| `connector/teamshift-connector/` | Standard WordPress plugin with REST routes, optional Abilities API integration and admin connection UI |
 | `skills/wp-manager/SKILL.md` | Agent guidance for updates, credentials and content editing |
 | `tests/`, `e2e/`, `scripts/record_fixtures.py` | Unit/contract tests, disposable Playground harness and fixture recorder |
 

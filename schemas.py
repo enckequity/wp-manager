@@ -18,7 +18,7 @@ SITES = {
 SITE_ADD = {
     "name": "wp_site_add",
     "description": (
-        "Register a WordPress site. The site needs the 'Website Manager: WP Connector for Hermes' plugin and a "
+        "Register a WordPress site. The site needs the 'TeamShift Connector' plugin and a "
         "WordPress Application Password. Verifies the connection before saving. The password is never taken from "
         "chat: it must already be saved as a workspace secret, by default WPM_<SITE_ID>_APP_PASSWORD. "
         "Ask the user to save it there first, then pass url and username (or the connection string) with "
@@ -37,7 +37,7 @@ SITE_ADD = {
             "properties": {"env": {"type": "string"}},
         },
         "connection_string": {"type": "string",
-                              "description": "wpmh1:... string from Tools → Hermes Connector. Its address and user are "
+                              "description": "wpmh1:... string from Tools → TeamShift Connector. Its address and user are "
                                              "used; its password is ignored. Never repeat it back."},
         "storage": {"type": "string", "enum": ["existing"],
                     "description": "existing (with credential). wp-manager never stores passwords."},

@@ -2,7 +2,7 @@
   "http_status": 403,
   "body": {
     "code": "wmhc_major_core_updates_disabled",
-    "message": "Major WordPress updates through Hermes are disabled in Tools → Hermes Connector.",
+    "message": "Major WordPress updates through Hermes are disabled in Tools → TeamShift Connector.",
     "data": {
       "status": 403
     }

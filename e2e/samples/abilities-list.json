@@ -2,10 +2,10 @@
   "http_status": 200,
   "body": [
     {
-      "name": "website-manager-hermes/get-status",
+      "name": "teamshift-connector/get-status",
       "label": "Get site status",
       "description": "Returns connector, WordPress and PHP versions, environment, active theme and pending update counts.",
-      "category": "website-manager-hermes",
+      "category": "teamshift-connector",
       "input_schema": [],
       "output_schema": {
         "type": "object"
@@ -25,7 +25,7 @@
       "_links": {
         "self": [
           {
-            "href": "http://127.0.0.1:9400/wp-json/wp-abilities/v1/abilities/website-manager-hermes/get-status",
+            "href": "http://127.0.0.1:9400/wp-json/wp-abilities/v1/abilities/teamshift-connector/get-status",
             "targetHints": {
               "allow": [
                 "GET"
@@ -40,16 +40,16 @@
         ],
         "wp:action-run": [
           {
-            "href": "http://127.0.0.1:9400/wp-json/wp-abilities/v1/abilities/website-manager-hermes/get-status/run"
+            "href": "http://127.0.0.1:9400/wp-json/wp-abilities/v1/abilities/teamshift-connector/get-status/run"
           }
         ]
       }
     },
     {
-      "name": "website-manager-hermes/list-updates",
+      "name": "teamshift-connector/list-updates",
       "label": "List available updates",
       "description": "Lists available core, plugin, theme and translation updates. Set refresh to true to check WordPress.org first.",
-      "category": "website-manager-hermes",
+      "category": "teamshift-connector",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -82,7 +82,7 @@
       "_links": {
         "self": [
           {
-            "href": "http://127.0.0.1:9400/wp-json/wp-abilities/v1/abilities/website-manager-hermes/list-updates",
+            "href": "http://127.0.0.1:9400/wp-json/wp-abilities/v1/abilities/teamshift-connector/list-updates",
             "targetHints": {
               "allow": [
                 "GET"
@@ -97,16 +97,16 @@
         ],
         "wp:action-run": [
           {
-            "href": "http://127.0.0.1:9400/wp-json/wp-abilities/v1/abilities/website-manager-hermes/list-updates/run"
+            "href": "http://127.0.0.1:9400/wp-json/wp-abilities/v1/abilities/teamshift-connector/list-updates/run"
           }
         ]
       }
     },
     {
-      "name": "website-manager-hermes/run-updates",
+      "name": "teamshift-connector/run-updates",
       "label": "Run updates",
       "description": "Updates plugins, themes, WordPress core or translations using the core upgraders. Items empty means all of that type. Take a backup first.",
-      "category": "website-manager-hermes",
+      "category": "teamshift-connector",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -150,7 +150,7 @@
       "_links": {
         "self": [
           {
-            "href": "http://127.0.0.1:9400/wp-json/wp-abilities/v1/abilities/website-manager-hermes/run-updates",
+            "href": "http://127.0.0.1:9400/wp-json/wp-abilities/v1/abilities/teamshift-connector/run-updates",
             "targetHints": {
               "allow": [
                 "GET"
@@ -165,7 +165,7 @@
         ],
         "wp:action-run": [
           {
-            "href": "http://127.0.0.1:9400/wp-json/wp-abilities/v1/abilities/website-manager-hermes/run-updates/run"
+            "href": "http://127.0.0.1:9400/wp-json/wp-abilities/v1/abilities/teamshift-connector/run-updates/run"
           }
         ]
       }

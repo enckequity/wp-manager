@@ -17,7 +17,7 @@ mkdirSync(SAMPLES, { recursive: true });
 
 const creds = JSON.parse(readFileSync(join(RUN, 'creds.json'), 'utf8'));
 const BASE = creds.url.replace(/\/$/, '');
-const NS = `${BASE}/wp-json/website-manager-hermes/v1`;
+const NS = `${BASE}/wp-json/teamshift-connector/v1`;
 const ABIL = `${BASE}/wp-json/wp-abilities/v1`;
 const SECRETS = [creds.app_password, creds.app_password.replace(/ /g, '')];
 const auth = (user, pw) => 'Basic ' + Buffer.from(`${user}:${pw}`).toString('base64');
@@ -179,19 +179,19 @@ if (!HAS_ABILITIES) {
   check('no Abilities API on this WP: route absent, connector still loads', none.status === 404, `HTTP ${none.status}`);
 } else {
   const abil = await call('GET', `${ABIL}/abilities?per_page=100`);
-  const ours = (abil.json || []).filter((a) => a.name?.startsWith('website-manager-hermes/'));
+  const ours = (abil.json || []).filter((a) => a.name?.startsWith('teamshift-connector/'));
   save('abilities-list', { http_status: abil.status, body: ours });
-  check('abilities list has get-status, list-updates, run-updates', ['get-status', 'list-updates', 'run-updates'].every((n) => ours.some((a) => a.name === `website-manager-hermes/${n}`)), ours.map((a) => a.name).join(', '));
-  const abStatus = await call('GET', `${ABIL}/abilities/website-manager-hermes/get-status/run`);
+  check('abilities list has get-status, list-updates, run-updates', ['get-status', 'list-updates', 'run-updates'].every((n) => ours.some((a) => a.name === `teamshift-connector/${n}`)), ours.map((a) => a.name).join(', '));
+  const abStatus = await call('GET', `${ABIL}/abilities/teamshift-connector/get-status/run`);
   check('ability get-status runs (GET)', abStatus.status === 200 && abStatus.json?.connector_version === '0.1.0');
-  const abList = await call('GET', `${ABIL}/abilities/website-manager-hermes/list-updates/run?input%5Brefresh%5D=false`);
+  const abList = await call('GET', `${ABIL}/abilities/teamshift-connector/list-updates/run?input%5Brefresh%5D=false`);
   save('ability-list-updates', { http_status: abList.status, body: abList.json });
   check('ability list-updates runs (GET)', abList.status === 200 && abList.json?.counts !== undefined);
-  const abRun = await call('POST', `${ABIL}/abilities/website-manager-hermes/run-updates/run`, { body: { input: { type: 'plugin', items: ['hello-dolly/hello.php'] } } });
+  const abRun = await call('POST', `${ABIL}/abilities/teamshift-connector/run-updates/run`, { body: { input: { type: 'plugin', items: ['hello-dolly/hello.php'] } } });
   save('ability-run-updates', { http_status: abRun.status, body: abRun.json });
   check('ability run-updates runs (POST) => up_to_date', abRun.status === 200 && abRun.json?.results?.[0]?.status === 'up_to_date');
   await settle('after ability run');
-  const abAnon = await call('GET', `${ABIL}/abilities/website-manager-hermes/get-status/run`, { authHeader: null });
+  const abAnon = await call('GET', `${ABIL}/abilities/teamshift-connector/get-status/run`, { authHeader: null });
   check('ability refuses anonymous callers', abAnon.status === 401 || abAnon.status === 403, `HTTP ${abAnon.status}`);
 }
 
@@ -218,16 +218,16 @@ async function browser(method, url, form) {
 jar.set('wordpress_test_cookie', 'WP%20Cookie%20check');
 const login = await browser('POST', `${BASE}/wp-login.php`, { log: 'admin', pwd: creds.admin_password || 'password', 'wp-submit': 'Log In', redirect_to: `${BASE}/wp-admin/`, testcookie: '1' });
 check('wp-admin login (cookie)', login.status === 302 && [...jar.keys()].some((k) => k.startsWith('wordpress_logged_in')), `HTTP ${login.status}`);
-const PAGE = `${BASE}/wp-admin/tools.php?page=website-manager-hermes-connector`;
+const PAGE = `${BASE}/wp-admin/tools.php?page=teamshift-connector`;
 const page = await browser('GET', PAGE);
-check('Tools → Hermes Connector page renders', page.status === 200 && page.text.includes('Hermes Connector') && page.text.includes('Create connection for Hermes'), `HTTP ${page.status}`);
-check('admin menu has Tools → Hermes Connector link', page.text.includes('tools.php?page=website-manager-hermes-connector'));
+check('Tools → TeamShift Connector page renders', page.status === 200 && page.text.includes('TeamShift Connector') && page.text.includes('Create connection for Hermes'), `HTTP ${page.status}`);
+check('admin menu has Tools → TeamShift Connector link', page.text.includes('tools.php?page=teamshift-connector'));
 check('page shows recent actions table with updates.run', page.text.includes('updates.run'));
 const nonce = (page.text.match(/name="_wpnonce" value="([0-9a-f]+)"/) || [])[1];
 check('create-connection form has a nonce', !!nonce);
 const noNonce = await browser('POST', PAGE, { wmhc_action: 'create_connection', _wpnonce: 'deadbeef' });
 check('create connection with a bad nonce is rejected', noNonce.status === 403 && !noNonce.text.includes('wpmh1:'), `HTTP ${noNonce.status}`);
-const created = await browser('POST', PAGE, { wmhc_action: 'create_connection', _wpnonce: nonce, _wp_http_referer: '/wp-admin/tools.php?page=website-manager-hermes-connector' });
+const created = await browser('POST', PAGE, { wmhc_action: 'create_connection', _wpnonce: nonce, _wp_http_referer: '/wp-admin/tools.php?page=teamshift-connector' });
 const conn = (created.text.match(/(wpmh1:[A-Za-z0-9+/=]+)/) || [])[1];
 check('create connection shows a wpmh1: connection string', created.status === 200 && !!conn, `HTTP ${created.status}`);
 let decoded = null;
@@ -240,7 +240,7 @@ if (conn) {
   SECRETS.push(decoded.app_password, decoded.app_password.replace(/ /g, ''));
 }
 const page2 = await browser('GET', PAGE);
-check('page lists the existing Hermes connection (no secret shown again)', page2.text.includes('Hermes (website-manager)') && !page2.text.includes('wpmh1:'));
+check('page lists the existing Hermes connection (no secret shown again)', page2.text.includes('TeamShift Connector') && !page2.text.includes('wpmh1:'));
 const log2 = await call('GET', `${NS}/log`);
 check('log records connection.create without the secret', (log2.json?.entries || []).some((e) => e.action === 'connection.create') && !SECRETS.some((s) => s && log2.text.includes(s)));
 

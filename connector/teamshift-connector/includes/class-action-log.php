@@ -2,10 +2,10 @@
 /**
  * Capped action log stored in a non-autoloaded option.
  *
- * @package WebsiteManagerHermesConnector
+ * @package TeamShiftConnector
  */
 
-namespace WebsiteManagerHermesConnector;
+namespace TeamShiftConnector;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

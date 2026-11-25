@@ -1,4 +1,4 @@
-"""Tolerant parsing of the connector's REST responses (namespace ``website-manager-hermes/v1``).
+"""Tolerant parsing of the connector's REST responses (namespace ``teamshift-connector/v1``).
 
 Shapes follow the connector (includes/class-service.php; docs/connector-api.md when present). Parsing here accepts the
 documented shape and a few plausible variants so a minor connector change degrades gracefully

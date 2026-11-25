@@ -2,10 +2,10 @@
 /**
  * Plugin bootstrap: wires the REST routes, abilities and admin page.
  *
- * @package WebsiteManagerHermesConnector
+ * @package TeamShiftConnector
  */
 
-namespace WebsiteManagerHermesConnector;
+namespace TeamShiftConnector;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
