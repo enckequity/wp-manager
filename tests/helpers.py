@@ -19,6 +19,7 @@ USER = META["username"]
 # A syntactically real Application Password that must never leak anywhere.
 SECRET = "AbCd EfGh IjKl MnOp QrSt UvWx"
 SECRET_NOSPACE = SECRET.replace(" ", "")
+PUBLIC_IP = "93.184.215.14"  # a public unicast address; nothing ever connects to it in tests
 
 
 def load_pkg():
@@ -104,6 +105,9 @@ class Env:
     def start(self):
         submodule("core.paths").set_home_override(self.home)
         submodule("core.client").set_transport(self.transport)
+        # Fixture hosts (*.test, example.com) resolve to a public documentation-free address, so the
+        # private-address guard lets replayed requests through; tests that need DNS answers swap it.
+        submodule("core.client").set_resolver(lambda host, port: [PUBLIC_IP])
         creds = submodule("core.credentials")
         creds.set_secret_getter(lambda name: self.secrets.get(name))
         submodule("core.settings").set_getter(lambda key, default=None: self.settings.get(key, default))
@@ -113,6 +117,7 @@ class Env:
     def stop(self):
         submodule("core.paths").set_home_override(None)
         submodule("core.client").set_transport(None)
+        submodule("core.client").set_resolver(None)
         creds = submodule("core.credentials")
         creds.set_secret_getter(None)
         submodule("core.settings").set_getter(None)

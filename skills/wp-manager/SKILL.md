@@ -29,7 +29,7 @@ creating or editing posts and pages. wp-manager takes **no backups**.
    would share another site's secret name (`my-blog` vs `my--blog`) are refused: pick a clearly
    different id.
 4. `http://` sites are refused unless the user explicitly accepts `allow_insecure: true` (its own
-   approval prompt). Localhost is fine.
+   approval prompt). Local, private-network and link-local addresses are always refused.
 
 ## Updates
 

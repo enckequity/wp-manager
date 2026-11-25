@@ -184,12 +184,14 @@ class Transport(unittest.TestCase):
         self.assertTrue(r["success"], r)
         self.assertIn("unencrypted", r["warning"])
 
-    def test_localhost_http_allowed(self):
+    def test_localhost_refused(self):  # TeamShift: no loopback/private targets
         self.env.secrets["WPM_LOCAL_APP_PASSWORD"] = SECRET
-        submodule("core.client").set_transport(ReplayTransport(base="http://127.0.0.1:9400"))
+        t = ReplayTransport(base="http://127.0.0.1:9400")
+        submodule("core.client").set_transport(t)
         r = call(tools.wp_site_add, {"url": "http://127.0.0.1:9400", "username": "a", "id": "local"})
-        self.assertTrue(r["success"], r)
-        self.assertNotIn("warning", r)
+        self.assertFalse(r["success"], r)
+        self.assertEqual(r["kind"], "blocked")
+        self.assertEqual(t.calls, [])
 
     def test_userinfo_in_url_rejected(self):
         before = self.t.network_calls

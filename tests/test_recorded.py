@@ -37,6 +37,9 @@ class Transport:
 class Recorded(unittest.TestCase):
     def setUp(self):
         self.fixture = json.loads(RECORDED.read_text())
+        # Recorded from a loopback Playground site; the TeamShift build refuses loopback targets, so
+        # replay it under a public host name (routing uses only the path).
+        self.fixture["meta"]["base_url"] = "https://recorded.example.test"
         self.env = Env(transport=Transport(self.fixture)).start()
 
     def tearDown(self):

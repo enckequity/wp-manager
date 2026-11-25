@@ -5,12 +5,19 @@ Safety rules enforced here, not by callers:
 * plain ``http://`` is refused unless the site opted in (``allow_insecure``) or is localhost;
 * the transport never follows redirects; :class:`WPClient` follows authenticated redirects only
   within the same origin (and never https → http), so credentials cannot be carried to another host;
-* every error message is scrubbed (URL userinfo, ``Authorization`` values, known secrets).
+* every error message is scrubbed (URL userinfo, ``Authorization`` values, known secrets);
+* every request, and every redirect hop, is checked before it is sent (:func:`vet_target`): a
+  host that is, or resolves to, a loopback, private, link-local, shared (CGNAT), multicast,
+  reserved or cloud-metadata address is refused. The real transport then connects only to the
+  address that was checked, so a second DNS answer cannot point the request somewhere else, and it
+  ignores proxy environment variables.
 """
 
 from __future__ import annotations
 
 import base64
+import http.client
+import ipaddress
 import json
 import re
 import socket
@@ -31,7 +38,7 @@ MAX_REDIRECTS = 5
 
 class WPError(Exception):
     """A request failed. ``kind``: invalid | insecure | network | auth | forbidden | not_found |
-    connector_missing | conflict | server | bad_response | redirect."""
+    connector_missing | conflict | server | bad_response | redirect | blocked."""
 
     def __init__(self, message: str, *, status: Optional[int] = None, code: str = "", kind: str = "error"):
         super().__init__(redact.scrub(message))
@@ -55,6 +62,7 @@ class Request:
     headers: dict = field(default_factory=dict)
     body: Optional[bytes] = None
     timeout: float = 60.0
+    connect_ip: Optional[str] = None  # the vetted address the real transport must connect to
 
 
 @dataclass
@@ -67,16 +75,122 @@ class Response:
 Transport = Callable[[Request], Response]
 
 
+# ------------------------------------------------------------------ private-address guard
+METADATA_ADDRESSES = frozenset(ipaddress.ip_address(a) for a in (
+    "169.254.169.254", "169.254.170.2", "169.254.169.253", "100.100.100.200", "192.0.0.192",
+    "fd00:ec2::254", "fd00:ec2::23",
+))
+
+Resolver = Callable[[str, int], list]
+
+
+def _system_resolver(host: str, port: int) -> list:
+    infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    out: list[str] = []
+    for info in infos:
+        addr = str(info[4][0])
+        if addr not in out:
+            out.append(addr)
+    return out
+
+
+_resolver: Resolver = _system_resolver
+
+
+def set_resolver(resolver: Optional[Resolver]) -> None:
+    """Swap DNS resolution (tests). ``None`` restores the system resolver."""
+    global _resolver
+    _resolver = resolver or _system_resolver
+
+
+def address_blocked(value: str) -> bool:
+    """True for any address that is not a public unicast internet address."""
+    try:
+        ip = ipaddress.ip_address(str(value).split("%", 1)[0].strip("[]"))
+    except ValueError:
+        return True  # unparseable: fail closed
+    candidates = [ip]
+    if ip.version == 6:
+        for embedded in (ip.ipv4_mapped, ip.sixtofour, (ip.teredo or (None, None))[1]):
+            if embedded is not None:
+                candidates.append(embedded)
+    for c in candidates:
+        if (c in METADATA_ADDRESSES or not c.is_global or c.is_multicast or c.is_loopback or c.is_private
+                or c.is_link_local or c.is_reserved or c.is_unspecified):
+            return True
+    return False
+
+
+def vet_target(url: str) -> str:
+    """Resolve ``url``'s host and return the address to connect to. Raises ``WPError(kind="blocked")``
+    when the host is local, or when any address it resolves to is not a public address."""
+    parts = urllib.parse.urlsplit(url)
+    host = (parts.hostname or "").strip("[]").lower()
+    if not host:
+        raise WPError("the URL has no host", kind="invalid")
+    try:
+        port = parts.port or (443 if parts.scheme == "https" else 80)
+    except ValueError:
+        raise WPError("the URL has an invalid port", kind="invalid") from None
+    refused = WPError(
+        f"refusing to connect to {host}: it is a local, private, link-local or metadata address",
+        kind="blocked",
+    )
+    if registry.is_local_host(host):
+        raise refused
+    try:
+        ipaddress.ip_address(host.split("%", 1)[0])
+        addresses = [host]
+    except ValueError:
+        try:
+            addresses = list(_resolver(host, port))
+        except (OSError, UnicodeError) as exc:
+            raise WPError(f"could not resolve {host}: {exc}", kind="network") from exc
+    if not addresses:
+        raise WPError(f"could not resolve {host}", kind="network")
+    if any(address_blocked(a) for a in addresses):
+        raise refused
+    return str(addresses[0]).split("%", 1)[0]
+
+
+def _pinned(conn_cls: type, connect_ip: Optional[str]) -> Callable[..., http.client.HTTPConnection]:
+    """A connection factory that connects to ``connect_ip`` (keeping Host/SNI/certificate checks on
+    the original host name) instead of resolving the host again."""
+    if not connect_ip or address_blocked(connect_ip):
+        raise WPError("refusing to connect: no vetted public address for this request", kind="blocked")
+
+    def factory(host: str, **kwargs: Any) -> http.client.HTTPConnection:
+        conn = conn_cls(host, **kwargs)
+        conn._create_connection = (  # noqa: SLF001 - documented hook in http.client
+            lambda address, *a, **kw: socket.create_connection((connect_ip, address[1]), *a, **kw))
+        return conn
+
+    return factory
+
+
+class _PinnedHTTPHandler(urllib.request.HTTPHandler):
+    def http_open(self, req):
+        return self.do_open(_pinned(http.client.HTTPConnection, getattr(req, "wpm_connect_ip", None)), req)
+
+
+class _PinnedHTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(_pinned(http.client.HTTPSConnection, getattr(req, "wpm_connect_ip", None)), req,
+                            context=self._context)
+
+
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: D401
         return None
 
 
-_opener = urllib.request.build_opener(_NoRedirect)
+_opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), _PinnedHTTPHandler(), _PinnedHTTPSHandler(),
+                                      _NoRedirect)
 
 
 def _urllib_transport(req: Request) -> Response:
     r = urllib.request.Request(req.url, data=req.body, method=req.method, headers=req.headers)
+    r.wpm_connect_ip = req.connect_ip
     try:
         with _opener.open(r, timeout=req.timeout) as resp:  # noqa: S310 - scheme validated by caller
             body = resp.read(MAX_BYTES + 1)
@@ -179,7 +293,8 @@ class WPClient:
             problem = registry.transport_problem(url, bool(self.site.get("allow_insecure")))
             if problem:
                 raise WPError(problem, kind="insecure")
-            resp = _transport(Request(method, url, dict(headers), body, timeout))
+            connect_ip = vet_target(url)  # every hop: no local/private/metadata targets, even after redirects
+            resp = _transport(Request(method, url, dict(headers), body, timeout, connect_ip))
             if resp.status not in (301, 302, 303, 307, 308):
                 return resp
             location = resp.headers.get("location", "")
