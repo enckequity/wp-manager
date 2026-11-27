@@ -164,7 +164,7 @@ def plan_add(args: dict) -> dict:
         if default_env in theirs:
             raise ServiceError(f"site id {site_id!r} would share the secret name {default_env} with "
                                f"existing site {s['id']!r}; pass a different id")
-        if ref["env"] in theirs:  # one site's secret is never sent to another site's URL
+        if ref.get("env") in theirs:  # one site's secret is never sent to another site's URL
             raise ServiceError(f"the secret {ref['env']} belongs to existing site {s['id']!r}; "
                                f"use {default_env} for this site")
     return {

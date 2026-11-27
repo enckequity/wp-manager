@@ -22,8 +22,10 @@ there to approve it.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
+import unicodedata
 from typing import Any, Callable, Optional
 
 from .core import credentials, redact, registry, service
@@ -59,8 +61,15 @@ def unattended() -> Optional[str]:
     return None
 
 
-# Model-chosen text (titles, labels, URLs) must not fake extra lines in the approval card.
-_CONTROL = re.compile(r"[\x00-\x1f\x7f\u2028\u2029]+")
+# Model-chosen text (titles, labels, URLs) must not fake extra lines or reorder text in the approval card:
+# control, format (bidi overrides, zero-width) and line/paragraph separator characters become spaces.
+class _Clean:
+    @staticmethod
+    def sub(repl: str, text: str) -> str:
+        return "".join(repl if unicodedata.category(ch) in ("Cc", "Cf", "Zl", "Zp") else ch for ch in text)
+
+
+_CONTROL = _Clean()
 
 
 def _list(items: Any, limit: int = 8) -> str:
@@ -172,7 +181,10 @@ def pre_tool_call(tool_name: str = "", args: Any = None, **kwargs: Any) -> Optio
     except Exception:  # fail closed: ask rather than let the call through unchecked
         decision = None
     if decision is None:
-        decision = (f"wp-manager:{tool_name}", f"wp-manager could not evaluate {tool_name}; approve only if expected.")
+        # Bound to these exact arguments, so an "always" here never pre-approves a later unchecked call.
+        digest = hashlib.sha256(json.dumps([tool_name, args], sort_keys=True, default=str).encode()).hexdigest()[:16]
+        decision = (f"wp-manager:unchecked:{tool_name}:{digest}",
+                    f"wp-manager could not evaluate {tool_name}; approve only if expected.")
     rule_key, message = decision
     message = _CONTROL.sub(" ", redact.scrub(message))
     return {"action": "approve", "message": f"wp-manager: {message}", "rule_key": rule_key}
