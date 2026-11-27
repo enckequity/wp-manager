@@ -12,17 +12,21 @@ Gated (``{"action": "approve", "rule_key": ...}``):
     an "always allow" for the https site never covers a plain-http one.
 
 Every other tool only reads. Approval is pinned on in this build: there is no setting that turns
-the gate off. Invalid arguments are not gated: the tool itself rejects them without any network
-call. In unattended runs (cron, webhooks) a gated call is blocked — fail closed — because nobody is
+the gate off. A call the gate cannot evaluate (invalid arguments included) still asks, with a
+generic prompt, and a call the handler would refuse (invalid arguments, a secret that belongs to
+another site) is blocked here with the handler's own reason: the registry can change between this hook
+and the handler, so the hook never lets a call through unchecked. In unattended runs (cron, webhooks) a gated call is blocked — fail closed — because nobody is
 there to approve it.
 """
 
 from __future__ import annotations
 
+import hashlib
 import os
+import re
 from typing import Any, Callable, Optional
 
-from .core import redact, registry, service
+from .core import credentials, redact, registry, service
 
 GATED_TOOLS = frozenset({"wp_update_apply", "wp_content_save", "wp_site_add", "wp_site_remove"})
 UNATTENDED_PLATFORMS = frozenset({"webhook", "msgraph_webhook", "api_server"})
@@ -53,6 +57,10 @@ def unattended() -> Optional[str]:
     if platform in UNATTENDED_PLATFORMS:
         return f"{platform} session"
     return None
+
+
+# Model-chosen text (titles, labels, URLs) must not fake extra lines in the approval card.
+_CONTROL = re.compile(r"[\x00-\x1f\x7f\u2028\u2029]+")
 
 
 def _list(items: Any, limit: int = 8) -> str:
@@ -94,7 +102,7 @@ def _decide_save(args: dict) -> Optional[tuple[str, str]]:
         return (f"wp-manager:publish:{site['id']}",
                 f"Edit {label} on {site['label']} ({site['url']}). Its current status could not be checked "
                 f"({redact.scrub(str(exc))[:120]}), so it may be live.")
-    if current in ("publish", "future"):
+    if current not in ("draft", "pending", "private", "auto-draft"):  # unknown counts as live
         change = ", ".join(sorted(body))
         unpublish = " This changes its status to " + str(body["status"]) + "." if body.get("status") else ""
         return (f"wp-manager:publish:{site['id']}",
@@ -114,7 +122,9 @@ def _decide_add(args: dict) -> Optional[tuple[str, str]]:
     warn = (" The site uses plain http:// (allow_insecure), so the Application Password crosses the "
             "network unencrypted.") if insecure else ""
     suffix = ":insecure" if insecure else ""
-    return (f"wp-manager:credential:{site['id']}{suffix}",
+    # Bound to the URL and the secret, so an "always" never covers a re-added id that points elsewhere.
+    bound = hashlib.sha256(f"{site['url']}\n{ref.get('env', '')}".encode()).hexdigest()[:12]
+    return (f"wp-manager:credential:{site['id']}:{bound}{suffix}",
             f"Connect {site['url']} using the existing secret {registry.credential_label(ref)}. "
             f"That secret will be sent to this site as its WordPress Application Password.{warn}")
 
@@ -131,30 +141,38 @@ _DECIDERS = {"wp_update_apply": _decide_update, "wp_content_save": _decide_save,
 
 def decide(tool_name: str, args: Any) -> Optional[tuple[str, str]]:
     """``(rule_key, message)`` when the call needs a human, else None."""
-    if tool_name not in GATED_TOOLS or not isinstance(args, dict):
+    if tool_name not in GATED_TOOLS:
         return None
+    if not isinstance(args, dict):
+        raise Refused("invalid arguments")
     try:
         return _DECIDERS[tool_name](args)
-    except (ValueError, KeyError, TypeError):
-        return None  # invalid input: the handler rejects it, with zero network calls
+    except (registry.RegistryError, service.ServiceError, credentials.CredentialError, KeyError, TypeError) as exc:
+        raise Refused(redact.scrub(str(exc))[:300]) from None
+
+
+class Refused(Exception):
+    """The call is invalid: blocked by the hook with the reason the handler would give."""
 
 
 def pre_tool_call(tool_name: str = "", args: Any = None, **kwargs: Any) -> Optional[dict]:
     if tool_name not in GATED_TOOLS:
         return None
-    try:
-        decision = decide(tool_name, args)
-    except Exception:
-        decision = (f"wp-manager:{tool_name}", f"wp-manager could not evaluate {tool_name}; approve only if expected.")
-    if decision is None:
-        return None
-    rule_key, message = decision
-    message = redact.scrub(message)
     who = unattended()
-    if who:
+    if who:  # before decide(): an unattended run makes no network call and reads no secret here
         return {
             "action": "block",
-            "message": f"wp-manager: not run — this needs human approval and this is an unattended {who}. "
-                       f"({message}) Run it from an interactive chat.",
+            "message": f"wp-manager: not run — {tool_name} needs human approval and this is an unattended {who}. "
+                       "Run it from an interactive chat.",
         }
+    try:
+        decision = decide(tool_name, args)
+    except Refused as exc:
+        return {"action": "block", "message": _CONTROL.sub(" ", f"wp-manager: not run — {exc}")}
+    except Exception:  # fail closed: ask rather than let the call through unchecked
+        decision = None
+    if decision is None:
+        decision = (f"wp-manager:{tool_name}", f"wp-manager could not evaluate {tool_name}; approve only if expected.")
+    rule_key, message = decision
+    message = _CONTROL.sub(" ", redact.scrub(message))
     return {"action": "approve", "message": f"wp-manager: {message}", "rule_key": rule_key}

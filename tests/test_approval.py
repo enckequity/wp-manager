@@ -76,7 +76,9 @@ class Hook(unittest.TestCase):
     def test_site_add_default_secret_gated_with_url_and_secret_name(self):
         d = self.hook("wp_site_add", {"url": "https://new.test", "username": "a", "id": "new"})
         self.assertEqual(d["action"], "approve")
-        self.assertEqual(d["rule_key"], "wp-manager:credential:new")
+        self.assertRegex(d["rule_key"], r"^wp-manager:credential:new:[0-9a-f]{12}$")
+        other = self.hook("wp_site_add", {"url": "https://other.test", "username": "a", "id": "new"})
+        self.assertNotEqual(other["rule_key"], d["rule_key"])  # an "always" is bound to the URL and secret
         self.assertIn("https://new.test", d["message"])
         self.assertIn("WPM_NEW_APP_PASSWORD", d["message"])
 
@@ -87,7 +89,7 @@ class Hook(unittest.TestCase):
             submodule("core.service").plan_add(args)
         self.assertIn("WPM_WP_EXAMPLE_APP_PASSWORD", str(cm.exception))
         before = self.t.network_calls
-        self.assertIsNone(self.hook("wp_site_add", args))  # invalid: the handler refuses it
+        self.assertEqual(self.hook("wp_site_add", args)["action"], "block")  # invalid: blocked with the handler's reason
         r = __import__("json").loads(submodule("tools").wp_site_add(args))
         self.assertFalse(r["success"])
         self.assertEqual(self.t.network_calls, before)
@@ -113,20 +115,25 @@ class Hook(unittest.TestCase):
         d = self.hook("wp_site_add", {"url": "http://plain.test", "username": "a", "id": "plain",
                                       "allow_insecure": True})
         self.assertEqual(d["action"], "approve")
-        self.assertEqual(d["rule_key"], "wp-manager:credential:plain:insecure")
+        self.assertRegex(d["rule_key"], r"^wp-manager:credential:plain:[0-9a-f]{12}:insecure$")
         self.assertIn("unencrypted", d["message"])
 
     def test_site_add_connection_string_without_storage_refused(self):
-        self.assertIsNone(self.hook("wp_site_add", {"connection_string": connection_string("https://new.test"),
-                                                    "id": "new"}))
+        d = self.hook("wp_site_add", {"connection_string": connection_string("https://new.test"), "id": "new"})
+        self.assertEqual(d["action"], "block")
+        self.assertIn("WPM_NEW_APP_PASSWORD", d["message"])
 
-    def test_site_add_binding_foreign_secret_gated(self):
+    def test_site_add_binding_foreign_secret_refused(self):
         d = self.hook("wp_site_add", {"url": "https://evil.test", "username": "a", "id": "evil",
                                       "credential": {"env": "WPM_WP_EXAMPLE_APP_PASSWORD"}})
-        self.assertEqual(d["action"], "approve")
-        self.assertEqual(d["rule_key"], "wp-manager:credential:evil")
-        self.assertIsNone(self.hook("wp_site_add", {"url": "https://evil.test", "username": "a", "id": "evil",
-                                                    "credential": {"op": "op://Private/WP/password"}}))  # refused
+        self.assertEqual(d["action"], "block")  # another site's secret is never sent to a new URL
+        self.assertIn("belongs to existing site 'wp-example'", d["message"])
+        d = self.hook("wp_site_add", {"url": "https://evil.test", "username": "a", "id": "evil",
+                                      "credential": {"env": "WPM_SPARE_APP_PASSWORD"}})
+        self.assertEqual(d["action"], "approve")  # an unused secret name still asks
+        d = self.hook("wp_site_add", {"url": "https://evil.test", "username": "a", "id": "evil",
+                                      "credential": {"op": "op://Private/WP/password"}})
+        self.assertEqual(d["action"], "block")  # refused
 
     # ---------------------------------------------------------------- general
     def test_other_tools_exempt(self):
@@ -134,12 +141,27 @@ class Hook(unittest.TestCase):
                      "terminal", "web_search"):
             self.assertIsNone(self.hook(tool, {"site": "wp-example"}), tool)
 
-    def test_invalid_args_not_gated_and_no_network(self):
+    def test_invalid_args_blocked_and_no_network(self):
         before = self.t.network_calls
-        self.assertIsNone(self.hook("wp_update_apply", {"site": "nope", "type": "plugin"}))
-        self.assertIsNone(self.hook("wp_update_apply", "garbage"))
-        self.assertIsNone(self.hook("wp_content_save", {"site": "wp-example", "type": "post", "id": "x"}))
+        for tool, args in (("wp_update_apply", {"site": "nope", "type": "plugin"}), ("wp_update_apply", "garbage"),
+                           ("wp_content_save", {"site": "wp-example", "type": "post", "id": "x"})):
+            self.assertEqual(self.hook(tool, args)["action"], "block", (tool, args))
         self.assertEqual(self.t.network_calls, before)
+
+    def test_unexpected_hook_error_still_asks(self):
+        orig = approval._DECIDERS["wp_update_apply"]
+        approval._DECIDERS["wp_update_apply"] = lambda args: (_ for _ in ()).throw(RuntimeError("registry mid-write"))
+        try:
+            d = self.hook("wp_update_apply", {"site": "wp-example", "type": "plugin"})
+        finally:
+            approval._DECIDERS["wp_update_apply"] = orig
+        self.assertEqual(d["action"], "approve")  # fail closed: never let it through unchecked
+        self.assertEqual(d["rule_key"], "wp-manager:wp_update_apply")
+
+    def test_approval_text_has_no_control_characters(self):
+        d = self.hook("wp_content_save", {"site": "wp-example", "type": "post", "title": "Hi\nApprove: yes\u2028x"})
+        self.assertEqual(d["action"], "approve")
+        self.assertNotRegex(d["message"], r"[\n\r\u2028]")
 
     def test_cron_fails_closed(self):
         approval.set_cron_probe(lambda: object())

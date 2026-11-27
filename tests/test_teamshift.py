@@ -302,7 +302,7 @@ class PrivateTargets(unittest.TestCase):
     def test_address_classes(self):
         blocked = ["127.0.0.1", "10.0.0.1", "172.16.5.4", "192.168.1.1", "169.254.169.254", "169.254.1.1",
                    "100.64.0.1", "100.100.100.200", "0.0.0.0", "224.0.0.1", "::1", "fe80::1", "fc00::1",
-                   "fd00:ec2::254", "::ffff:127.0.0.1", "::ffff:169.254.169.254", "2002:7f00:1::1", "not-an-ip"]
+                   "fd00:ec2::254", "::ffff:127.0.0.1", "::ffff:169.254.169.254", "2002:7f00:1::1", "64:ff9b::a9fe:a9fe", "64:ff9b::7f00:1", "not-an-ip"]
         for a in blocked:
             self.assertTrue(self.client.address_blocked(a), a)
         for a in ("93.184.215.14", "1.1.1.1", "2606:4700:4700::1111"):

@@ -77,7 +77,8 @@ class EverythingClean(unittest.TestCase):
         add_default_site(self.env)
         d = approval.pre_tool_call(tool_name="wp_site_add",
                                    args={"connection_string": connection_string("https://x.test"), "id": "x"})
-        self.assertIsNone(d)
+        self.assertEqual(d["action"], "block")
+        self.outputs.append(json.dumps(d))
         d = approval.pre_tool_call(tool_name="wp_update_apply", args={"site": "wp-example", "type": "plugin"})
         self.outputs.append(json.dumps(d))
         self.assert_clean()

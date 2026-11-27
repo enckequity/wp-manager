@@ -80,6 +80,8 @@ METADATA_ADDRESSES = frozenset(ipaddress.ip_address(a) for a in (
     "169.254.169.254", "169.254.170.2", "169.254.169.253", "100.100.100.200", "192.0.0.192",
     "fd00:ec2::254", "fd00:ec2::23",
 ))
+# NAT64 (the RFC 6052 well-known prefix) embeds an IPv4 target in the low 32 bits.
+_NAT64 = ipaddress.ip_network("64:ff9b::/96")
 
 Resolver = Callable[[str, int], list]
 
@@ -111,7 +113,8 @@ def address_blocked(value: str) -> bool:
         return True  # unparseable: fail closed
     candidates = [ip]
     if ip.version == 6:
-        for embedded in (ip.ipv4_mapped, ip.sixtofour, (ip.teredo or (None, None))[1]):
+        nat64 = ipaddress.IPv4Address(int(ip) & 0xFFFFFFFF) if ip in _NAT64 else None
+        for embedded in (ip.ipv4_mapped, ip.sixtofour, (ip.teredo or (None, None))[1], nat64):
             if embedded is not None:
                 candidates.append(embedded)
     for c in candidates:
@@ -339,7 +342,7 @@ class WPClient:
                            code=code, kind="forbidden")
         if status == 404 and code == "rest_no_route" and CONNECTOR_NAMESPACE.split("/")[0] in route:
             return WPError(
-                "the Website Manager connector plugin is not installed or not active on this site "
+                "the TeamShift Connector plugin is not installed or not active on this site "
                 "(install it, then Tools → TeamShift Connector)", status=status, code=code, kind="connector_missing",
             )
         if status == 404:
